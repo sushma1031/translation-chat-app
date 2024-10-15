@@ -13,12 +13,12 @@ export default function Chat() {
     const formData = new FormData();
     let src = "hindi";
     let files = (e.target as HTMLInputElement).files;
-    if (!files || files.length == 0) {
-      alert("Please upload an audio file");
-      return;
-    }
+    // if (!files || files.length == 0) {
+    //   alert("Please upload an audio file");
+    //   return;
+    // }
 
-    let file = files[0];
+    // let file = files[0];
 
     formData.append("src", src);
     formData.append("dest", "english");
@@ -28,7 +28,7 @@ export default function Chat() {
       },
     };
     try {
-      formData.append("file", "file");
+      // formData.append("file", file);
       response = await apiConfig.post("translate/audio", formData);
 
       setTranslatedText(response.data.translated);
@@ -40,13 +40,14 @@ export default function Chat() {
   async function handleVideoSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData();
-    
+    const response = await apiConfig.post("translate/subtitles", { src: "hindi", dest: "english" });
+    setTranslatedText(response.data.data);
   }
 
   return (
     <>
       <h1>Chat Room</h1>
-      <form onSubmit={handleAudioSubmit}>
+      <form onSubmit={handleVideoSubmit}>
         <label htmlFor="userText">Enter text: </label>
         <input
           name="userText"
@@ -54,7 +55,7 @@ export default function Chat() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
         />
-        <input type="file" name="audioFile" id="audioFile" />
+        {/* <input type="file" name="audioFile" id="audioFile" /> */}
         <br />
         <button type="submit">Translate</button>
       </form>

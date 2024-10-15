@@ -1,8 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utils import image, text, audio
+from utils import image, text, audio, subtitles
+import store
+import logging
+
 
 app = Flask(__name__)
+app.config['DEBUG'] = True
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 
 @app.route("/api/python")
@@ -43,8 +47,18 @@ async def translate_audio():
     # res = 'transcribed & translated text'
     # voice = audio.text_to_voice(res, dest, 'x')
     voice = 'cloudinary link of translated audio msg'
-    print('Successful.')
+    logging.debug('Successful.')
     return jsonify({'translated': voice})
   except Exception as e:
-    print(e)
+    logging.debug(e)
     return jsonify({'translated': f"error: {e}"})
+
+@app.route("/api/translate/subtitles", methods=['POST'])
+async def generate_subtitles():
+  # src = request.form['src']   
+  # dest = request.form['dest']
+  logging.debug("here")
+  path = "api/assets/hindi-2.wav"
+  result = store.upload_to_cld(path, "audio")
+  ...
+  return jsonify({'data': result})
