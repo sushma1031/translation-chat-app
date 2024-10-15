@@ -34,14 +34,9 @@ async def translate_audio():
   src = request.form['src']   
   dest = request.form['dest']
   sp_text = ''
-  if src == "english":
-    # raise an error if no transcription
-    sp_text = 'transcrbed by echogarden'
-  else:
-    # raise an error if no file
-    file = f"api/assets/hindi-2.wav"
-    # sp_text = audio.transcribe_audio(file)
-    ...
+  # raise an error if no file
+  file = f"api/assets/hindi-2.wav"
+  # sp_text = audio.transcribe_audio(file, src)
     
   try:
     # res = text.translate_text(sp_text, src, dest)
