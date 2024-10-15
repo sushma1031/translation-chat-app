@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydub import AudioSegment 
 import speech_recognition as sr
-from utils import languages, translate
+from utils import languages
 from gtts import gTTS
 
 def split_audio(audio_path, folder=None):
@@ -48,9 +48,8 @@ def split_audio(audio_path, folder=None):
 async def text_to_voice(text_data, to_language, name):
   dest = languages.get_language_code(to_language)
   myobj = gTTS(text=text_data, lang=dest, slow=False)
-  Path("translated").mkdir(exist_ok=True)
   myobj.save(f"translated/{name}-translated.mp3")
-  # TODO save in cloudinary and return link
+  return f"translated/{name}-translated.mp3"
 
 def transcribe_audio(audio_file, src):
   spoken_text =  ''

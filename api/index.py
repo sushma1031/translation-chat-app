@@ -43,23 +43,25 @@ async def translate_image():
 
 @app.route("/api/translate/audio", methods=['POST'])
 async def translate_audio():
-  # file = request.files['file']
+  file = request.files['file']
   src = request.form['src']   
   dest = request.form['dest']
   sp_text = ''
   # raise an error if no file
-  file = f"api/assets/hindi-2.wav"
-  # sp_text = audio.transcribe_audio(file, src)
+  save_path = os.path.join("uploads", file.filename)
+  file.save(save_path)
+  sp_text = audio.transcribe_audio(save_path, src)
     
   try:
-    # res = text.translate_text(sp_text, src, dest)
+    res = text.translate_text(sp_text, src, dest)
     # res = 'transcribed & translated text'
-    # voice = audio.text_to_voice(res, dest, 'x')
-    voice = 'cloudinary link of translated audio msg'
+    voice = await audio.text_to_voice(res.text, dest, file.filename[:-4])
+    url = store.upload_to_cld(voice, "audio")
     logging.debug('Successful.')
-    return jsonify({'translated': voice})
+    os.remove(voice)
+    return jsonify({'translated': url})
   except Exception as e:
-    logging.debug(e)
+    print(e)
     return jsonify({'translated': f"error: {e}"})
 
 @app.route("/api/translate/subtitles", methods=['POST'])
