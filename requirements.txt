@@ -3,3 +3,8 @@ flask[async]
 flask-cors
 python-bidi
 easyocr
+cloudinary
+moviepy
+pysrt
+pillow
+pydub
