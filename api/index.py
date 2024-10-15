@@ -3,6 +3,7 @@ from flask_cors import CORS
 from utils import image, text, audio, subtitles
 import store
 import logging
+import os
 
 
 app = Flask(__name__)
@@ -15,8 +16,7 @@ def hello_world():
 
 @app.route('/api/translate/text', methods=['POST'])
 async def translate_text():
-    data = request.get_json() # Get JSON data from the request
-    t = data.get('text') # Extract the text sent from React
+    
 
     # Return the translated text as a JSON response
     # trans = text.translate_text(t, 'korean', 'english')
@@ -24,11 +24,20 @@ async def translate_text():
     return jsonify({'translated': trans})
 
 @app.route("/api/translate/image", methods=['POST'])
-async def translate_image(): 
-  path = f"api/assets/kannada-1.jpg"
+async def translate_image():
+  if 'file' not in request.files:
+    return "No file part"
+  file = request.files['file']
   
-  # translations = image.translate_img_text(path, 'kannada', 'english')
+  src = request.form.get('src')
+  dest = request.form.get('dest')
+  save_path = os.path.join("uploads", file.filename)
+  file.save(save_path)
+  
+  # translations = image.translate_img_text(save_path, src, dest)
   translations = ["Foo bar", "rab ooF"]
+  # TODO upload image to cloudinary (or handle in FE?)
+  os.remove(save_path)
   
   return jsonify({'translated': translations})
 
