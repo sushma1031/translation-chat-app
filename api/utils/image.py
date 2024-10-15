@@ -16,7 +16,7 @@ def extract_image_text(image_path, reader):
 
 def translate_img_text(image, src, dest):
     print("Loading model...")
-    reader = load_ocr_model(['kannada', 'en'])
+    reader = load_ocr_model([src, 'english'])
     print("Extracting text...")
     extracted_text = extract_image_text(image, reader)
     print("Translating text...")
