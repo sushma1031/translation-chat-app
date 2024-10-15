@@ -1,6 +1,14 @@
-import sys
+import asyncio
 import os
 from pydub import AudioSegment 
+
+import speech_recognition as sr
+from utils import languages, translate
+from gtts import gTTS
+
+from pathlib import Path
+import subprocess
+
 
 def split_audio(audio_path, folder=None):
   audio = AudioSegment.from_wav(audio_path)
@@ -39,5 +47,48 @@ def split_audio(audio_path, folder=None):
 
   return audio_chunk_paths
 
-if __name__ == "__main__":
-  split_audio(audio_path=f"../audio/{sys.argv[1]}")
+async def text_to_voice(text_data, to_language, name):
+  dest = languages.get_language_code(to_language)
+  myobj = gTTS(text=text_data, lang=dest, slow=False)
+  Path("../translated").mkdir(exist_ok=True)
+  myobj.save(f"{Path.cwd()}/../translated/{name}-translated.mp3")
+  # TODO save in cloudinary
+
+def transcribe_audio(audio_file):
+  spoken_text =  ''
+  try:
+    rec = sr.Recognizer()
+    with sr.WavFile(audio_file) as source:              
+        audio = rec.record(source)
+    spoken_text = rec.recognize_google(audio)   
+  except Exception as e:
+    print(e)
+  
+  return spoken_text
+
+def translate_audio(audio_file, source_language, dest_language):
+  src = languages.get_language_code(source_language)
+  dest = languages.get_language_code(dest_language)
+  spoken_text =  ''
+  if src == "en":
+    subprocess.run(["sh.exe", "./transcribe_english.sh", audio_file, f"{audio_file}-result.txt"]).returncode
+    try:
+      with open(f"{audio_file}-result.txt", "r") as f:
+        spoken_text = f.read()
+    except Exception as e:
+       print(e)
+    os.remove(f"{audio_file}-result.txt")
+
+  else:
+    try:
+      rec = sr.Recognizer()
+      with sr.WavFile(audio_file) as source:              
+          audio = rec.record(source)
+      spoken_text = rec.recognize_google(audio)   
+    except Exception as e:
+      print(e)
+
+  try:
+    return translate.translate_single(spoken_text, src, dest)
+  except Exception as e:
+      print(e)

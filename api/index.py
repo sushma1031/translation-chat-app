@@ -28,10 +28,28 @@ async def translate_image():
   
   return jsonify({'translated': translations})
 
-@app.route('/api/translate/text', methods=['POST'])
-def translate_text():
-    data = request.get_json()  # Get JSON data from the request
-    text = data.get('text')    # Extract the text sent from React
-
-    # Return the translated text as a JSON response
-    return jsonify({'translated': text})
+@app.route("/api/translate/audio", methods=['POST'])
+async def translate_audio():
+  # file = request.files['file']
+  src = request.form['src']   
+  dest = request.form['dest']
+  sp_text = ''
+  if src == "english":
+    # raise an error if no transcription
+    sp_text = 'transcrbed by echogarden'
+  else:
+    # raise an error if no file
+    file = f"api/assets/hindi-2.wav"
+    # sp_text = audio.transcribe_audio(file)
+    ...
+    
+  try:
+    # res = text.translate_text(sp_text, src, dest)
+    # res = 'transcribed & translated text'
+    # voice = audio.text_to_voice(res, dest, 'x')
+    voice = 'cloudinary link of translated audio msg'
+    print('Successful.')
+    return jsonify({'translated': voice})
+  except Exception as e:
+    print(e)
+    return jsonify({'translated': f"error: {e}"})
