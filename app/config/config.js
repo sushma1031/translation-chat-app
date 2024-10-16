@@ -4,11 +4,6 @@ export const createAPIConfig = () => {
     {
       baseURL: "http://localhost:5328/api/",
     },
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    }
   );
   return instance;
 };
