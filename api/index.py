@@ -5,10 +5,20 @@ import store
 import logging
 import os
 
+from utils import image, text, audio, subtitles
+import store
+from config import connect_db
+
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+db = None
+
+@app.before_request
+async def init_db():
+  global db
+  db = await connect_db.connect()
 
 @app.route("/api/python")
 def hello_world():
