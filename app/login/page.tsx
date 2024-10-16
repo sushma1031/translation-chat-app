@@ -1,6 +1,6 @@
 "use client";
 import { FormEvent, useState } from "react";
-import { createAPIConfig } from "../config/config.js";
+import createAPIConfig from "../config/config.js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AlertSnackbar from "../components/AlertSnackbar.tsx";
