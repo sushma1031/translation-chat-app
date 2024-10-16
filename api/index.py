@@ -1,24 +1,16 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utils import image, text, audio, subtitles
-import store
 import logging
 import os
 
 from utils import image, text, audio, subtitles
-import store
-from config import connect_db
+from config import store
+from config.db import db
 
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
-db = None
-
-@app.before_request
-async def init_db():
-  global db
-  db = await connect_db.connect()
 
 @app.route("/api/python")
 def hello_world():
