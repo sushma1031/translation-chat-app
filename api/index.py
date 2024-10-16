@@ -86,18 +86,15 @@ async def generate_subtitles():
   return jsonify({'data': result})
 
 # user endpoints
-@app.route("/api/register", methods=('GET', 'POST'))
+@app.route("/api/register", methods=['POST'])
 async def register():
-  if request.method == "POST":
-    response = await register_user.register_user(request.json)
-    return response
+  response = await register_user.register_user(request.json)
+  # TODO: login user
+  return response
 
-@app.route("/api/login", methods=('GET', 'POST'))
+@app.route("/api/login", methods=['POST'])
 async def login():
-  if request.method == "POST":
-    return login_user.validate(request.json.get('email'), request.json.get('password'))
-  else:
-    return "<p>Login page is in works! Maybe you meant to send a POST request?</p>"
+  return login_user.validate(request.json.get('email'), request.json.get('password'))
   
 @app.route("/api/users/<name>/details")
 @jwt_required()
