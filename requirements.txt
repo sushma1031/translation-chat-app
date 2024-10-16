@@ -9,4 +9,4 @@ pysrt
 pillow
 pydub
 pymongo
-pydantic
+pydantic[email]
