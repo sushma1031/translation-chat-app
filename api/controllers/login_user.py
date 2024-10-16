@@ -1,7 +1,7 @@
 from models.User import User, users
-from flask import jsonify
+from flask import jsonify, make_response
 from flask_bcrypt import check_password_hash
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from flask_jwt_extended import create_access_token
 
 def validate(email, password):
   try:
@@ -16,13 +16,20 @@ def validate(email, password):
         "message": "incorrect password",
         "error": True,
       }), 400
-
-    em['_id'] = str(em['_id'])
-    return jsonify({
-      "message": "user verified",
-      "success": True,
-      "data": em
-    }), 200
+    access_token = create_access_token(identity={"email": email, "id": str(em["_id"])})
+    response = make_response(jsonify({
+        "message": "login successful",
+        "token": access_token,
+        "success": True
+    }), 200)
+    response.set_cookie(
+        'access_token_cookie',
+        access_token,
+        httponly=True,
+        secure=True,
+        samesite='None'
+    )
+    return response
   except Exception as e:
     return jsonify({
       "message": str(e), 

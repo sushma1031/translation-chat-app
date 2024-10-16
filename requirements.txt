@@ -10,3 +10,5 @@ pillow
 pydub
 pymongo
 pydantic[email]
+flask-bcrypt 
+Flask-JWT-Extended
