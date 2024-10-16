@@ -1,4 +1,5 @@
 from flask import request, jsonify, make_response
+from flask_bcrypt import generate_password_hash
 from models.User import User, users
 
 async def register_user(data):
@@ -16,11 +17,12 @@ async def register_user(data):
                 'error': True,
             }), 400
     
+    hashed = generate_password_hash(password, 5).decode('utf-8')
     user = User(
             name=name,
             email=email,
             profile_pic=profile_pic,
-            password=password
+            password=hashed
         )
     
     result = users.insert_one(user.model_dump())
