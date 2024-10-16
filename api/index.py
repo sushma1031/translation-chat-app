@@ -9,7 +9,7 @@ from datetime import timedelta
 from utils import image, text, audio, subtitles
 from config import store
 from config.db import db
-from controllers import register_user, login_user
+from controllers import register_user, login_user, fetch_user, logout_user
 
 dotenv.load_dotenv()
 
@@ -105,6 +105,10 @@ async def user_details(name):
   current_user = get_jwt_identity()
   response = fetch_user.fetch_user_details(current_user)
   return response
+
+@app.route("/api/logout")
+def logout():
+  return logout_user.logout()
 
 
 if __name__ == "__main__":
