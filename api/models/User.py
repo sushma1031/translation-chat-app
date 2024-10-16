@@ -1,4 +1,3 @@
-import uuid
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
@@ -8,7 +7,7 @@ from config.db import db
 users = db['users']
 
 class User(BaseModel):
-  name: str = Field(..., title="Name", min_length=1)
+  name: str = Field(..., title="Name", min_length=3)
   email: EmailStr = Field(..., title="Email")
   password: str = Field(..., title="Password", min_length=8)
   language: Optional[str] = Field(default="english", description="User's language preference")

@@ -6,6 +6,7 @@ import os
 from utils import image, text, audio, subtitles
 from config import store
 from config.db import db
+from controllers import register_user
 
 
 app = Flask(__name__)
@@ -75,3 +76,12 @@ async def generate_subtitles():
   result = store.upload_to_cld(path, "audio")
   ...
   return jsonify({'data': result})
+
+# user endpoints
+@app.route("/api/register", methods=('GET', 'POST'))
+async def register():
+  response = await register_user.register_user(request.json)
+  return response
+
+if __name__ == "__main__":
+  app.run(debug=True, port=5328)
