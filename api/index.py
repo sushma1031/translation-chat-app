@@ -1,12 +1,13 @@
-from flask import request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 import dotenv
 import logging
 import os
 from datetime import timedelta
+from flask_socketio import SocketIO
 
-from socket_server import app
+# from socket_server import app
 from utils import image, text, audio, subtitles
 from config import store
 from config.db import db
@@ -22,69 +23,29 @@ app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 jwt = JWTManager(app)
 
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000", async_mode='eventlet')
+
+@app.route('/')
+def index():
+    return 'Flask SocketIO server is Running'
+
 @app.route("/api/python")
 def hello_world():
-    return "<p>Hello, World!</p>"
+  return "<p>Hello, World!</p>"
 
-@app.route('/api/translate/text', methods=['POST'])
-async def translate_text():
-    
+@app.route("/test/db")
+async def func():
+  random = db['random']
+  random.drop()
+  random.insert_one({'name': 'Jake', 'group': 'Enhypen'})
+  obs = []
+  for ob in random.find({}):
+    obs.append(f"{ob['group']}: {ob['name']}")
+  return jsonify({'data': obs})
 
-    # Return the translated text as a JSON response
-    # trans = text.translate_text(t, 'korean', 'english')
-    trans = 'dummy'
-    return jsonify({'translated': trans})
+# translation endpoints
 
-@app.route("/api/translate/image", methods=['POST'])
-async def translate_image():
-  if 'file' not in request.files:
-    return "No file part"
-  file = request.files['file']
-  
-  src = request.form.get('src')
-  dest = request.form.get('dest')
-  save_path = os.path.join("uploads", file.filename)
-  file.save(save_path)
-  
-  # translations = image.translate_img_text(save_path, src, dest)
-  translations = ["Foo bar", "rab ooF"]
-  # TODO upload image to cloudinary (or handle in FE?)
-  os.remove(save_path)
-  
-  return jsonify({'translated': translations})
 
-@app.route("/api/translate/audio", methods=['POST'])
-async def translate_audio():
-  file = request.files['file']
-  src = request.form['src']   
-  dest = request.form['dest']
-  sp_text = ''
-  # raise an error if no file
-  save_path = os.path.join("uploads", file.filename)
-  file.save(save_path)
-  sp_text = audio.transcribe_audio(save_path, src)
-    
-  try:
-    res = text.translate_text(sp_text, src, dest)
-    # res = 'transcribed & translated text'
-    voice = await audio.text_to_voice(res.text, dest, file.filename[:-4])
-    url = store.upload_to_cld(voice, "audio")
-    logging.debug('Successful.')
-    os.remove(voice)
-    return jsonify({'translated': url})
-  except Exception as e:
-    print(e)
-    return jsonify({'translated': f"error: {e}"})
-
-@app.route("/api/translate/subtitles", methods=['POST'])
-async def generate_subtitles():
-  # src = request.form['src']   
-  # dest = request.form['dest']
-  logging.debug("here")
-  path = "api/assets/hindi-2.wav"
-  result = store.upload_to_cld(path, "audio")
-  ...
-  return jsonify({'data': result})
 
 # user endpoints
 @app.route("/api/register", methods=['POST'])
@@ -108,6 +69,21 @@ async def user_details(name):
 def logout():
   return logout_user.logout()
 
+# socket endpoints
+@socketio.on('connect')
+def handle_connect():
+    print(f"Connected: {request.sid}")
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f'Disconnected: {request.sid}')
+
+
+@socketio.on('custom_event')
+def handle_custom_event(data):
+    print(f"Received event: {data}")
+    socketio.emit('response', {'message': 'Event received'})
+
 
 if __name__ == "__main__":
-  app.run(debug=True, port=5328)
+  socketio.run(app, port=5328)
