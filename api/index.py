@@ -26,7 +26,7 @@ app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 
 jwt = JWTManager(app)
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000", async_mode='eventlet')
 
 @app.route('/')
 def index():
@@ -99,7 +99,7 @@ def handle_disconnect():
     print(f'Disconnected: {request.sid}')
     token = get_jwt_identity()
     user = fetch_user.fetch_user_by_email(token["email"])
-    onlineUsers.remove(user._id)
+    onlineUsers.remove(user["_id"])
 
 
 @socketio.on('custom_event')
