@@ -1,11 +1,9 @@
 from models.User import users
-from flask_jwt_extended import get_jwt_identity
 from flask import jsonify
 
 def fetch_user_details(user):
   try:
-    details = users.find_one({"email": user["email"]}, {"password": 0})
-    details["_id"] = str(details["_id"])
+    details = fetch_user_by_email(user["email"])
 
     return jsonify({
       "message": "user details",
@@ -17,3 +15,8 @@ def fetch_user_details(user):
       "message": str(e), 
       "error": True
     }), 500
+  
+def fetch_user_by_email(email):
+  details = users.find_one({"email": email}, {"password": 0})
+  details["_id"] = str(details["_id"])
+  return details

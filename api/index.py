@@ -5,7 +5,7 @@ import dotenv
 import logging
 import os
 from datetime import timedelta
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit, join_room
 
 # from socket_server import app
 from utils import image, text, audio, subtitles
@@ -16,14 +16,17 @@ from controllers import register_user, login_user, fetch_user, logout_user
 dotenv.load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}, 
+                     r"/socket.io/*": {"origins": "http://localhost:3000"}}, 
+                     supports_credentials=True)
 app.config['DEBUG'] = True
 app.config['JWT_SECRET_KEY'] = os.environ['JWT_SECRET']
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
 app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+
 jwt = JWTManager(app)
 
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 @app.route('/')
 def index():
@@ -70,20 +73,40 @@ def logout():
   return logout_user.logout()
 
 # socket endpoints
+onlineUsers = set()
+
 @socketio.on('connect')
+@jwt_required()
 def handle_connect():
     print(f"Connected: {request.sid}")
+    try:
+      # token = request.args.get('auth', None)
+      # if not token:
+      #    print(f'Error: No authorisation token')
+      identity = get_jwt_identity()
+      user = fetch_user.fetch_user_by_email(identity["email"])
+      if user:
+        join_room(user["_id"])
+        onlineUsers.add(user["_id"])
+        emit('user_online', list(onlineUsers))
+    except Exception as e:
+       print(f'Error connecting user: {e}')
+
 
 @socketio.on('disconnect')
+@jwt_required()
 def handle_disconnect():
     print(f'Disconnected: {request.sid}')
+    token = get_jwt_identity()
+    user = fetch_user.fetch_user_by_email(token["email"])
+    onlineUsers.remove(user._id)
 
 
 @socketio.on('custom_event')
 def handle_custom_event(data):
     print(f"Received event: {data}")
-    socketio.emit('response', {'message': 'Event received'})
+    emit('response', {'message': 'Event received'})
 
 
 if __name__ == "__main__":
-  socketio.run(app, port=5328)
+  socketio.run(app, port=5328, debug=True)
