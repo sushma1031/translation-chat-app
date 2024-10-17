@@ -23,6 +23,7 @@
     "axios": "^1.7.7",
     "bufferutil": "^4.0.8",
     "concurrently": "^8.0.1",
+    "dotenv": "^16.4.5",
     "eslint": "8.40.0",
     "eslint-config-next": "13.4.2",
     "next": "13.4.3",
