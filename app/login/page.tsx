@@ -34,7 +34,6 @@ export default function Login() {
 
     try {
       const response = await apiConfig.post("login", data, {withCredentials: true});
-      console.log("response", response);
 
       setStatus("success");
       setOpen(true);
@@ -48,7 +47,7 @@ export default function Login() {
         localStorage.setItem("token", response?.data?.token);
 
       }
-      router.push("/");
+      router.push(`/u/${response.data["id"]}`);
     } catch (error) {
       console.log(error);
       setStatus("error");
