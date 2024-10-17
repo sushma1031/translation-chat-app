@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 import dotenv
-import logging
 import os
+import sys
 from datetime import timedelta
 from flask_socketio import SocketIO, emit, join_room
 
@@ -80,9 +80,6 @@ onlineUsers = set()
 def handle_connect():
     print(f"Connected: {request.sid}")
     try:
-      # token = request.args.get('auth', None)
-      # if not token:
-      #    print(f'Error: No authorisation token')
       identity = get_jwt_identity()
       user = fetch_user.fetch_user_by_email(identity["email"])
       if user:
@@ -102,10 +99,9 @@ def handle_disconnect():
     onlineUsers.remove(user["_id"])
 
 
-@socketio.on('custom_event')
-def handle_custom_event(data):
-    print(f"Received event: {data}")
-    emit('response', {'message': 'Event received'})
+@socketio.on('chat')
+def handle_chat(userId):
+    print(f"Received data: {userId}", file=sys.stdout)
 
 
 if __name__ == "__main__":
