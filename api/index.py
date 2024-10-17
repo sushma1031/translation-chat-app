@@ -11,7 +11,7 @@ from flask_socketio import SocketIO, emit, join_room
 from utils import image, text, audio, subtitles
 from config import store
 from config.db import db
-from controllers import register_user, login_user, fetch_user, logout_user
+from controllers import register_user, login_user, fetch_user, logout_user, fetch_user_messages
 
 dotenv.load_dotenv()
 
@@ -61,9 +61,9 @@ async def register():
 async def login():
   return login_user.validate(request.json.get('email'), request.json.get('password'))
   
-@app.route("/api/users/<name>/details")
+@app.route("/api/user-details")
 @jwt_required()
-async def user_details(name):
+async def user_details():
   current_user = get_jwt_identity()
   response = fetch_user.fetch_user_details(current_user)
   return response
@@ -101,7 +101,17 @@ def handle_disconnect():
 
 @socketio.on('chat')
 def handle_chat(userId):
+    from models.User import users
+    from bson.objectid import ObjectId
     print(f"Received data: {userId}", file=sys.stdout)
+    user = users.find_one({"_id": ObjectId(userId)}, {"password": 0})
+    payload = {
+       "_id": str(user["_id"]),
+       "name": user["name"],
+       "email": user["email"],
+       "online": (userId in onlineUsers)
+    }
+    emit("user_status", payload)
 
 
 if __name__ == "__main__":

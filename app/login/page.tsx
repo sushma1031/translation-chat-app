@@ -47,7 +47,7 @@ export default function Login() {
         localStorage.setItem("token", response?.data?.token);
 
       }
-      router.push(`/u/${response.data["id"]}`);
+      router.push(`/`);
     } catch (error) {
       console.log(error);
       setStatus("error");
