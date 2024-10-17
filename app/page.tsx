@@ -28,12 +28,22 @@ export default function Home() {
     }
   }
   useEffect(() => {
-    console.log("Loaded.")
     fetchUserDetails();
   }, [])
 
   // socket connection
+  useEffect(() => {
+    const socketConn = io("http://localhost:5328", {
+      withCredentials: true
+    });
+    socketConn.on("user_online", (data) => {
+      console.log(data);
+    })
 
+    return () => {
+      socketConn.disconnect();
+    }
+  }, [])
 
   return (
     <>
