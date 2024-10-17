@@ -20,6 +20,7 @@ def validate(email, password):
     response = make_response(jsonify({
         "message": "login successful",
         "token": access_token,
+        "id": str(em["_id"]),
         "success": True
     }), 200)
     response.set_cookie(
