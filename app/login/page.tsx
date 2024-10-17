@@ -4,6 +4,8 @@ import createAPIConfig from "../config/config.js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AlertSnackbar from "../components/AlertSnackbar.tsx";
+import { useDispatch } from "react-redux";
+import { setToken, setUser } from "../redux/userSlice.ts";
 
 export default function Login() {
   const [data, setData] = useState({
@@ -13,6 +15,7 @@ export default function Login() {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"success" | "error">("error");
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -41,6 +44,9 @@ export default function Login() {
           email: "",
           password: "",
         });
+        dispatch(setToken(response?.data?.token));
+        localStorage.setItem("token", response?.data?.token);
+
       }
       router.push("/");
     } catch (error) {
@@ -48,7 +54,6 @@ export default function Login() {
       setStatus("error");
       setOpen(true);
     }
-    console.log("data", data);
   };
   
   return (
