@@ -3,8 +3,14 @@ import userReducer from './userSlice';
 
 export const store = configureStore({
   reducer: {
-    user: userReducer
+    user: userReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['user/setSocketConnection'],
+      },
+    }),
 })
 
 export type RootState = ReturnType<typeof store.getState>
