@@ -12,3 +12,4 @@ pymongo
 pydantic[email]
 flask-bcrypt 
 Flask-JWT-Extended
+flask-socketio
