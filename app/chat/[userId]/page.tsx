@@ -8,6 +8,7 @@ import ImageIcon from "@mui/icons-material/Image";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import AudioFileIcon from "@mui/icons-material/AudioFile";
 import CloseIcon from "@mui/icons-material/Close";
+import SendIcon from "@mui/icons-material/Send";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import uploadToCloud from "./util";
@@ -41,8 +42,13 @@ export default function ChatScreen() {
       socketConn.emit("chat", params.userId);
 
       socketConn.on("user_status", (data) => {
-        console.log("user status fetched");
+        console.log("Chat receiver data fetched");
         setChatUser(data);
+      });
+
+      socketConn.on("message", (data) => {
+        console.log("Message data:", data);
+        setChatMsgs(data);
       });
     }
   }, [socketConn, params.userId, user]);
@@ -64,6 +70,8 @@ export default function ChatScreen() {
     videoUrl: "",
   });
   const [loading, setLoading] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState([] as string[]);
+  const currentMessage = useRef(null);
 
   const clearUpload = (type: "image" | "audio" | "video") => {
     switch (type) {
@@ -117,10 +125,12 @@ export default function ChatScreen() {
           receiver: params.userId,
           text: message.text,
           imageUrl: message.imageUrl,
+          audioUrl: message.audioUrl,
           videoUrl: message.videoUrl,
           src_lang: user.language,
           dest_lang: chatUser.language,
         });
+        console.log("Sent successfully!");
         setMessage({
           text: "",
           imageUrl: "",
@@ -141,6 +151,44 @@ export default function ChatScreen() {
         className="h-[calc(100vh-128px)] bg-blue-200 overflow-x-hidden overflow-y-scroll"
       >
         <div>
+          <div className="flex flex-col gap-2 py-2 mx-2" ref={currentMessage}>
+            {chatMsgs.map((msg, index) => {
+              return (
+                <div
+                key={index}
+                  className={
+                    `p-1 py-1 rounded w-fit max-w-[280px] md:max-w-sm lg:max-w-md ml-auto bg-teal-100
+                    }`
+
+                    // user._id === msg?.msgByUserId
+                    //   ? "ml-auto bg-teal-100"
+                    //   : "bg-white"
+                  }
+                >
+                  <div className="w-full relative">
+                    {/* {msg?.imageUrl && (
+                      <img
+                        src={msg?.imageUrl}
+                        className="w-full h-full object-scale-down"
+                      />
+                    )} */}
+                    {/* {msg?.videoUrl && (
+                      <video
+                        src={msg.videoUrl}
+                        className="w-full h-full object-scale-down"
+                        controls
+                      />
+                    )} */}
+                  </div>
+                  <p className="px-2">{msg}</p>
+                  {/* should be msg.text */}
+                  <p className="text-xs ml-auto w-fit">
+                    {/* {moment(msg.createdAt).format("hh:mm")} */}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
           {/**display uploaded media*/}
           {uploadedMedia.isUploaded &&
             uploadedMedia.mediaRef.current?.files && (
@@ -160,25 +208,21 @@ export default function ChatScreen() {
                     // src={imageInputRef.current}
                     className="aspect-square w-full h-full max-w-sm m-2 object-scale-down"
                   /> */}
-                  <p>
-                    Media: {uploadedMedia.mediaRef.current?.files[0].name}
-                  </p>
+                  <p>Media: {uploadedMedia.mediaRef.current?.files[0].name}</p>
                 </div>
               </div>
             )}
         </div>
+        {loading && (
+          <div className="w-full h-full flex sticky bottom-0 justify-center items-center">
+            <p>Loading...</p>
+          </div>
+        )}
       </section>
       <section id="sendBar" className="h-16 bg-white flex items-center">
         <div className="relative">
           <div className="ps-3 flex justify-center items-center">
-            {/* <IconButton
-              aria-label="attach media"
-              onClick={() => {
-                setToggleMediaUpload((prev) => !prev);
-              }}
-            >
-              <AddIcon />
-            </IconButton> */}
+            {/* upload media */}
             <form className="flex gap-2">
               <Tooltip title="Audio">
                 <label
@@ -256,11 +300,11 @@ export default function ChatScreen() {
               />
             </form>
           </div>
-
-          {/* upload media */}
-          {}
         </div>
-        <form className="h-full w-full flex gap-2 pe-5" onSubmit={handleSendMessage}>
+        <form
+          className="h-full w-full flex gap-2 pe-5"
+          onSubmit={handleSendMessage}
+        >
           <input
             type="text"
             placeholder="Your message"
@@ -268,7 +312,9 @@ export default function ChatScreen() {
             value={message.text}
             onChange={handleTextChange}
           />
-          <button type="submit">Send</button>
+          <button type="submit" className="hover:text-blue-700">
+            <SendIcon />
+          </button>
         </form>
       </section>
     </>
