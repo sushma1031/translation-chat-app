@@ -103,15 +103,21 @@ def handle_disconnect():
 def handle_chat(userId):
     from models.User import users
     from bson.objectid import ObjectId
-    print(f"Received data: {userId}", file=sys.stdout)
+    # print(f"Received data: {userId}", file=sys.stdout)
     user = users.find_one({"_id": ObjectId(userId)}, {"password": 0})
     payload = {
        "_id": str(user["_id"]),
        "name": user["name"],
        "email": user["email"],
+       "language": user["language"],
+       "profile_pic": user["profile_pic"],
        "online": (userId in onlineUsers)
     }
     emit("user_status", payload)
+
+@socketio.on('new_message')
+def handle_new_message(data):
+   print(f"Recieved data: {data}", file=sys.stdout)
 
 
 if __name__ == "__main__":
