@@ -117,8 +117,40 @@ def handle_chat(userId):
 
 @socketio.on('new_message')
 def handle_new_message(data):
-   print(f"Recieved data: {data}", file=sys.stdout)
+  print(f"data: {data}", file=sys.stdout)
+  from models.Chat import chats, messages, Chat, Message
+  from bson.objectid import ObjectId
 
+  #  check if there exists a Chat b/w sender & receiver in the db
+  sender_id = ObjectId(data['sender'])
+  receiver_id = ObjectId(data['receiver'])
+  # print(f"{sender_id}, {receiver_id}", file=sys.stdout)
+  
+  chat = chats.find_one({
+    "$or": [
+        { "sender": sender_id, "receiver": receiver_id },
+        { "sender": receiver_id, "receiver": sender_id }
+    ]
+  })
+  
+  if not chat:
+    new_chat = Chat(sender=ObjectId(data["sender"]), receiver=ObjectId(data["receiver"]))
+    result = chats.insert_one(new_chat.model_dump())
+    chat = chats.find_one({'_id': result.inserted_id})
+  
+  new_message = Message(original_lang=data["src_lang"], 
+                        text=data["text"], 
+                        translated_text="", trans_audio_url="", trans_video_url="", 
+                        image_url=data["imageUrl"], audio_url=data["audioUrl"], video_url=data["videoUrl"], 
+                        user_id=sender_id)
+  mresult = messages.insert_one(new_message.model_dump())
+  message = messages.find_one({'_id': mresult.inserted_id})
+  # TODO update conversation
+  # TODO translate message and update that
+  # TODO fetch messages (not ids!) from the conversation
+  # TODO emit to both sender and receiver
+  emit('message', ["a whole bunch of messages"], to=data["sender"])
+  emit('message', ["a whole bunch of messages"], to=data["receiver"])
 
 if __name__ == "__main__":
   socketio.run(app, port=5328, debug=True)
