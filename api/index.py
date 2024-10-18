@@ -96,7 +96,7 @@ def handle_disconnect():
     print(f'Disconnected: {request.sid}')
     token = get_jwt_identity()
     user = fetch_user.fetch_user_by_email(token["email"])
-    onlineUsers.remove(user["_id"])
+    onlineUsers.discard(user["_id"])
 
 
 @socketio.on('chat')
