@@ -8,6 +8,7 @@ async def register_user(data):
     email = data.get('email')
     password = data.get('password')
     profile_pic = data.get('profile_pic') or ""
+    language = data.get('language') or "english"
 
     check_email = users.find_one({'email': email})
 
@@ -22,7 +23,8 @@ async def register_user(data):
             name=name,
             email=email,
             profile_pic=profile_pic,
-            password=hashed
+            password=hashed,
+            language=language
         )
     
     result = users.insert_one(user.model_dump())
