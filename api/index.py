@@ -7,11 +7,8 @@ import sys
 from datetime import timedelta
 from flask_socketio import SocketIO, emit, join_room
 
-# from socket_server import app
 from utils import image, text, audio, subtitles
-from config import store
-from config.db import db
-from controllers import register_user, login_user, fetch_user, logout_user, fetch_user_messages
+from controllers import register_user, login_user, fetch_user, logout_user
 
 dotenv.load_dotenv()
 
@@ -32,23 +29,67 @@ socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000", async_mod
 def index():
     return 'Flask SocketIO server is Running'
 
-@app.route("/api/python")
-def hello_world():
-  return "<p>Hello, World!</p>"
-
-@app.route("/test/db")
-async def func():
-  random = db['random']
-  random.drop()
-  random.insert_one({'name': 'Jake', 'group': 'Enhypen'})
-  obs = []
-  for ob in random.find({}):
-    obs.append(f"{ob['group']}: {ob['name']}")
-  return jsonify({'data': obs})
-
 # translation endpoints
+@app.route('/api/translate/text', methods=['POST'])
+async def translate_text():
+  """
+  src: source language code
+  dest: destination language code
+  text: text to be translated
+  """
+  data = request.get_json()
+  src = data['src']   
+  dest = data['dest']
+  url = data['text']
+  result = text.translate_text(url, src, dest)
+  if result.get('success', False):
+     return jsonify(result), 200
+  return jsonify(result), 500
 
+@app.route("/api/translate/image", methods=['POST'])
+async def translate_image():
+  """
+  src: source language code
+  dest: destination language code
+  url: url of media
+  """
+  data = request.get_json()
+  src = data['src']   
+  dest = data['dest']
+  url = data['url']
+  
+  result = image.download_and_translate_img(url, src, dest)
+  if result.get('success', False):
+     return jsonify(result), 200
+  return jsonify(result), 500
 
+@app.route("/api/translate/audio", methods=['POST'])
+async def translate_audio():
+  """
+  src: source language code
+  dest: destination language code
+  url: url of media
+  """
+  data = request.get_json()
+  src = data['src']   
+  dest = data['dest']
+  url = data['url']
+  result = audio.translate_and_upload_audio(url, src, dest)
+  if result.get('success', False):
+     return jsonify(result), 200
+  return jsonify(result), 500
+    
+
+@app.route("/api/translate/subtitles", methods=['POST'])
+async def generate_subtitles():
+  data = request.get_json()
+  src = data['src']   
+  # dest = data['dest']
+  url = data['url']
+  result = subtitles.generate_st_and_upload(url, src)
+  if result.get('success', False):
+     return jsonify(result), 200
+  return jsonify(result), 500
 
 # user endpoints
 @app.route("/api/register", methods=['POST'])
