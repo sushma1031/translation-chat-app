@@ -184,6 +184,30 @@ def handle_new_message(data):
                         translated_text="", trans_audio_url="", trans_video_url="", 
                         image_url=data["imageUrl"], audio_url=data["audioUrl"], video_url=data["videoUrl"], 
                         user_id=sender_id)
+  
+  # message = messages.find_one({'_id': mresult.inserted_id})
+  
+  # TODO translate message and update that
+  src_code = data["src_lang"]
+  dest_code = data["dest_lang"]
+  if not (src_code == dest_code):
+    if data["text"]:
+      result = text.translate_text(data["text"], src_code, dest_code)
+      if result.get('success', False):
+          new_message["trans_text"] = result.get('result')
+    elif data["audioUrl"]:
+      result = audio.translate_and_upload_audio(data["audioUrl"], src_code, dest_code)
+      if result.get('success', False):
+          new_message["trans_audio_url"] = result.get('result')
+    elif data["imageUrl"]:
+      result =  image.download_and_translate_img(data["imageUrl"], src_code, dest_code)
+      if result.get('success', False):
+          new_message["trans_text"] = "; ".join(result.get('result'))
+    elif data["videoUrl"]:
+      result = subtitles.generate_st_and_upload(data["videoUrl"], src_code)
+      if result.get('success', False):
+          new_message["trans_video_url"] = result.get('result')
+
   mresult = messages.insert_one(new_message.model_dump())
   message = messages.find_one({'_id': mresult.inserted_id})
   # TODO update conversation
