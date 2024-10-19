@@ -1,12 +1,16 @@
 import asyncio
 import os
 import subprocess
-from pathlib import Path
+# from pathlib import Path
 
 from pydub import AudioSegment 
 import speech_recognition as sr
-from utils import languages
 from gtts import gTTS
+
+from utils import languages
+from utils.cloud_store import download_media, upload_to_cld
+from utils.text import translate_text
+
 
 def split_audio(audio_path, folder=None):
   audio = AudioSegment.from_wav(audio_path)
@@ -45,7 +49,7 @@ def split_audio(audio_path, folder=None):
 
   return audio_chunk_paths
 
-async def text_to_voice(text_data, to_language, name):
+def text_to_voice(text_data, to_language, name):
   dest = languages.get_language_code(to_language)
   myobj = gTTS(text=text_data, lang=dest, slow=False)
   myobj.save(f"translated/{name}-translated.mp3")
@@ -54,7 +58,7 @@ async def text_to_voice(text_data, to_language, name):
 def transcribe_audio(audio_file, src):
   spoken_text =  ''
   if src == "english":
-    subprocess.run(["sh.exe", "./transcribe_english.sh", audio_file, f"{audio_file}-result.txt"]).returncode
+    subprocess.run(["sh.exe", "utils/transcribe_english.sh", audio_file, f"{audio_file}-result.txt"]).returncode
     try:
       with open(f"{audio_file}-result.txt", "r") as f:
         spoken_text = f.read()
@@ -72,29 +76,26 @@ def transcribe_audio(audio_file, src):
   
   return spoken_text
 
-# def translate_audio(audio_file, source_language, dest_language):
-#   src = languages.get_language_code(source_language)
-#   dest = languages.get_language_code(dest_language)
-#   spoken_text =  ''
-#   if src == "en":
-#     subprocess.run(["sh.exe", "./transcribe_english.sh", audio_file, f"{audio_file}-result.txt"]).returncode
-#     try:
-#       with open(f"{audio_file}-result.txt", "r") as f:
-#         spoken_text = f.read()
-#     except Exception as e:
-#        print(e)
-#     os.remove(f"{audio_file}-result.txt")
-
-#   else:
-#     try:
-#       rec = sr.Recognizer()
-#       with sr.WavFile(audio_file) as source:              
-#           audio = rec.record(source)
-#       spoken_text = rec.recognize_google(audio)   
-#     except Exception as e:
-#       print(e)
-
-#   try:
-#     return translate.translate_single(spoken_text, src, dest)
-#   except Exception as e:
-#       print(e)
+def translate_and_upload_audio(url, source_language, dest_language):
+  save_path = os.path.join("uploads", f"a-{source_language}-1.wav")
+  if not download_media(url, save_path):
+    return {"error": True, "message": "Could not download media"}
+  sp_text = ''
+  sp_text = transcribe_audio(save_path, source_language)
+  try:
+    res = translate_text(sp_text, source_language, dest_language)
+    if res.get('success', False):
+      print("here")
+      voice = text_to_voice(res["result"], dest_language, f"a-{source_language}-1")
+      print(save_path[:-4])
+      url = upload_to_cld(voice, "audio")
+      os.remove(voice)
+      return {'success': True, 'result': url}
+    return res
+  except Exception as e:
+    print(e)
+    return {'message': f"{e}", "error": True}
+  
+if __name__ == "__main__":
+  print("all imports are proper")
+  
