@@ -22,7 +22,7 @@ class PyObjectId(ObjectId):
 class Message(BaseModel):
     original_lang: str = Field(default="english")
     text: Optional[str] = Field(default="")
-    translated_text: Optional[str] = Field(default="")
+    trans_text: Optional[str] = Field(default="")
     image_url: Optional[str] = Field(default="")
     video_url: Optional[str] = Field(default="")
     trans_video_url: Optional[str] = Field(default="")
