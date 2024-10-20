@@ -1,6 +1,7 @@
 from flask import request, jsonify, make_response
 from flask_bcrypt import generate_password_hash
 from models.User import User, users
+from utils.languages import language_mapping
 
 async def register_user(data):
   try:
@@ -8,7 +9,7 @@ async def register_user(data):
     email = data.get('email')
     password = data.get('password')
     profile_pic = data.get('profile_pic') or ""
-    language = data.get('language') or "english"
+    language = data.get('language') or "en"
 
     check_email = users.find_one({'email': email})
 
@@ -42,3 +43,6 @@ async def register_user(data):
       "message": str(e), 
       "error": True
     }), 500
+  
+def send_languages():
+  return language_mapping

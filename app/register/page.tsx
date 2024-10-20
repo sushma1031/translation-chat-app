@@ -1,22 +1,40 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import createAPIConfig from "../config/config.js";
 import AlertSnackbar from "../components/AlertSnackbar.tsx"; 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+interface LangMap {
+  [key: string]: string
+}
+
 export default function Register() {
+  const apiConfig = createAPIConfig();
   const [data, setData] = useState({
     name: "",
     email: "",
     password: "",
     profile_pic: "",
-    language: "english"
+    language: "en"
   });
   const [uploadPhoto, setUploadPhoto] = useState("");
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"success" | "error">("error")
   const router = useRouter();
+  const [languages, setLanguages] = useState({} as LangMap)
+
+  useEffect(() => {
+    const fetchLangs = async () => {
+      try {
+        const response = await apiConfig.get("/register");
+        setLanguages(response.data.data);
+      } catch (error) {
+        console.log(`Error: ${error}`);
+      }
+    };
+    fetchLangs();
+  }, [])
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,20 +47,20 @@ export default function Register() {
     });
   };
 
-  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // const file = e.target.files[0];
+  // const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   // const file = e.target.files[0];
 
-    const uploadPhoto = { todo: "upload to Cloudinary", url: "" };
+  //   const uploadPhoto = { todo: "upload to Cloudinary", url: "" };
 
-    // setUploadPhoto(file);
+  //   // setUploadPhoto(file);
 
-    setData((prev) => {
-      return {
-        ...prev,
-        profile_pic: uploadPhoto?.url,
-      };
-    });
-  };
+  //   setData((prev) => {
+  //     return {
+  //       ...prev,
+  //       profile_pic: uploadPhoto?.url,
+  //     };
+  //   });
+  // };
 
   const handleClearUploadPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
@@ -123,7 +141,7 @@ export default function Register() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <input
+          {/* <input
             type="text"
             id="language"
             name="language"
@@ -131,26 +149,43 @@ export default function Register() {
             className="bg-slate-100 px-2 py-1 focus:outline-primary"
             value={data.language}
             onChange={handleOnChange}
-          />
+          /> */}
+          {Object.keys(languages).length > 0 && (
+            <select
+              className="bg-slate-100 px-2 py-1 focus:outline-primary"
+              name="language"
+              id="language"
+              value={data.language}
+              onChange={(e) => {
+                setData((prev) => ({ ...prev, language: e.target.value }));
+              }}
+            >
+              {Object.keys(languages).map((l, i) => (
+                <option key={i} value={languages[l]}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="profile_pic">
-            Photo :
+          {/* <label htmlFor="profile_pic">
+            Photo:
             <div className="h-14 bg-slate-200 flex justify-center items-center border rounded hover:border-primary cursor-pointer">
               <p className="text-sm max-w-[300px] text-ellipsis line-clamp-1">
                 {uploadPhoto ? uploadPhoto : "Upload profile photo"}
               </p>
             </div>
-          </label>
+          </label> */}
 
-          <input
+          {/* <input
             type="file"
             id="profile_pic"
             name="profile_pic"
             className="bg-slate-100 px-2 py-1 focus:outline-primary hidden"
             onChange={handleUploadPhoto}
-          />
+          /> */}
         </div>
 
         <button
