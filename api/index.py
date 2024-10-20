@@ -92,8 +92,11 @@ async def generate_subtitles():
   return jsonify(result), 500
 
 # user endpoints
-@app.route("/api/register", methods=['POST'])
+@app.route("/api/register", methods=['POST', 'GET'])
 async def register():
+  if request.method == 'GET':
+     langs = register_user.send_languages()
+     return jsonify({"data": langs}), 200
   response = await register_user.register_user(request.json)
   # TODO: login user
   return response
@@ -141,26 +144,69 @@ def handle_disconnect():
 
 
 @socketio.on('chat')
-def handle_chat(userId):
+def handle_chat(sen, rec):
     from models.User import users
+    from models.Chat import chats
     from bson.objectid import ObjectId
     # print(f"Received data: {userId}", file=sys.stdout)
-    user = users.find_one({"_id": ObjectId(userId)}, {"password": 0})
+    user_id = ObjectId(sen)
+    other_user_id = ObjectId(rec)
+    user = users.find_one({"_id": other_user_id}, {"password": 0})
     payload = {
        "_id": str(user["_id"]),
        "name": user["name"],
        "email": user["email"],
        "language": user["language"],
        "profile_pic": user["profile_pic"],
-       "online": (userId in onlineUsers)
+       "online": (rec in onlineUsers),
     }
     emit("user_status", payload)
+    # get messages so far and emit that as "message"
+    chat = chats.find_one({
+    "$or": [
+        { "sender": user_id, "receiver": other_user_id },
+        { "sender": other_user_id, "receiver": user_id }
+    ]
+  })
+    if chat:
+      cursor = chats.aggregate([
+        {
+          "$match": {"_id": chat["_id"]}
+        },
+        {
+          "$lookup": {
+              "from": "messages",
+              "localField": "messages",
+              "foreignField": "_id",
+              "as": "messages"
+          }
+        },
+        {
+        "$project": {
+          "messages": {
+              "$sortArray": {
+                  "input": "$messages",
+                  "sortBy": { "sent_at": 1 }  # Sort messages by `sent_at`
+              }
+          },
+        }}
+      ])
+      for m in cursor:
+       chat_msgs = m
+      for m in chat_msgs["messages"]:
+        m["_id"] = str(m["_id"])
+        m["sent_by"] = str(m["sent_by"])
+        m['sent_at'] = m['sent_at'].isoformat()
+      
+    emit("message", chat_msgs.get("messages", []))
+
+      
 
 @socketio.on('new_message')
 def handle_new_message(data):
-  print(f"data: {data}", file=sys.stdout)
   from models.Chat import chats, messages, Chat, Message
   from bson.objectid import ObjectId
+  # print(data, file=sys.stdout)
 
   #  check if there exists a Chat b/w sender & receiver in the db
   sender_id = ObjectId(data['sender'])
@@ -183,39 +229,73 @@ def handle_new_message(data):
                         text=data["text"], 
                         translated_text="", trans_audio_url="", trans_video_url="", 
                         image_url=data["imageUrl"], audio_url=data["audioUrl"], video_url=data["videoUrl"], 
-                        user_id=sender_id)
-  
-  # message = messages.find_one({'_id': mresult.inserted_id})
-  
-  # TODO translate message and update that
+                        sent_by=sender_id)
+   
+  # translate message and update that
   src_code = data["src_lang"]
   dest_code = data["dest_lang"]
   if not (src_code == dest_code):
     if data["text"]:
       result = text.translate_text(data["text"], src_code, dest_code)
       if result.get('success', False):
-          new_message["trans_text"] = result.get('result')
+          new_message.trans_text = result.get('result')
     elif data["audioUrl"]:
       result = audio.translate_and_upload_audio(data["audioUrl"], src_code, dest_code)
       if result.get('success', False):
-          new_message["trans_audio_url"] = result.get('result')
+          new_message.trans_audio_url = result.get('result')
     elif data["imageUrl"]:
       result =  image.download_and_translate_img(data["imageUrl"], src_code, dest_code)
       if result.get('success', False):
-          new_message["trans_text"] = "; ".join(result.get('result'))
+          new_message.trans_text = "; ".join(result.get('result'))
     elif data["videoUrl"]:
       result = subtitles.generate_st_and_upload(data["videoUrl"], src_code)
       if result.get('success', False):
-          new_message["trans_video_url"] = result.get('result')
+          new_message.trans_video_url = result.get('result')
 
   mresult = messages.insert_one(new_message.model_dump())
-  message = messages.find_one({'_id': mresult.inserted_id})
   # TODO update conversation
-  # TODO translate message and update that
-  # TODO fetch messages (not ids!) from the conversation
-  # TODO emit to both sender and receiver
-  emit('message', ["a whole bunch of messages"], to=data["sender"])
-  emit('message', ["a whole bunch of messages"], to=data["receiver"])
+  chats.update_one({"_id": chat["_id"]}, {
+     "$push": {"messages": mresult.inserted_id}
+  })
+  # fetch messages (not ids!) from the conversation
+  chat_msgs = None
+  cursor = chats.aggregate([
+    {
+        "$match": {"_id": chat["_id"]}
+    },
+    {
+        "$lookup": {
+            "from": "messages",
+            "localField": "messages",
+            "foreignField": "_id",
+            "as": "messages"
+        }
+    },
+    {
+       "$project": {
+        "messages": {
+            "$sortArray": {
+                "input": "$messages",
+                "sortBy": { "sent_at": 1 }  # Sort messages by `sent_at`
+            }
+        },
+    }}
+  ])
+  
+  for m in cursor:
+    chat_msgs = m
+
+  for m in chat_msgs["messages"]:
+     m["_id"] = str(m["_id"])
+     m["sent_by"] = str(m["sent_by"])
+     m['sent_at'] = m['sent_at'].isoformat()
+  
+  def emit_message(updated_chat):
+    emit('message', updated_chat, to=data["sender"])
+    emit('message', updated_chat, to=data["receiver"])
+  
+  emit_message(chat_msgs.get("messages", []))
+  
 
 if __name__ == "__main__":
   socketio.run(app, port=5328, debug=True)
