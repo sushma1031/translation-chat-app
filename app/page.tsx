@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import createAPIConfig from "./config/config.js"
 import { useSelector, useDispatch } from 'react-redux';
@@ -27,8 +27,37 @@ export default function UserHome() {
       console.log(`Error: ${error}`)
     }
   }
+
+  const logoutUser = async () => {
+    const apiConfig = createAPIConfig();
+    const response = await apiConfig.get("/logout");
+    if (response.data.error) return;
+    dispatch(logout());
+    router.push("/login");
+  }
+
+  const fetchAvailableUsers = async () => {
+    const apiConfig = createAPIConfig();
+     try {
+       const response = await apiConfig.get("/users", {
+         withCredentials: true,
+       });
+       if (response.data.error) {
+         console.log(`Error fetching users: ${response.data.message}`)
+       }
+       let users = response.data.data;
+       users = users.filter((u: User, i: number) => {
+         return users[i]["_id"] != user?._id
+       });
+       setChatUsers(users);
+     } catch (error) {
+       console.log(`Error: ${error}`);
+     }
+  }
+
   useEffect(() => {
     fetchUserDetails();
+    fetchAvailableUsers();
   }, [])
 
   // socket connection
@@ -54,10 +83,52 @@ export default function UserHome() {
 
   return (
     <>
-      <h1 className="text-center">User Home</h1>
-      <main className="flex flex-col items-center justify-between p-24">
-        <div className="z-10 w-full max-w-5xl items-center justify-center text-sm lg:flex">
-          <p>Hi <span className='capitalize'>{user.name}</span>! Your preferred language of communication is: <span className="capitalize">{user.language}</span></p>
+      <h1 className="text-center py-3">User Home</h1>
+      <main className="text-center mx-auto">
+        <div className="w-full items-center justify-center text-sm lg:flex">
+          <p className="text-center pb-5">
+            Hi <span className="capitalize">{user.name}</span>! Your preferred
+            language of communication is:{" "}
+            <span className="code bg-blue-100">{user.language}</span>
+          </p>
+        </div>
+        <div className="text-center pt-3">
+          <p className="underline">Available Users</p>
+          <br />
+        </div>
+
+        <div className="relative overflow-x-auto flex justify-center">
+          <table className="w-6/12 text-sm text-center rtl:text-right text-gray-500">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-300">
+              <tr>
+                <th scope="col" className="px-6 py-3">
+                  Name
+                </th>
+                <th scope="col" className="pl-6 py-3">
+                  Communication Language
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {chatUsers.map((u, i) => (
+                <tr className="bg-white border-b" key={i}>
+                  <th
+                    scope="row"
+                    // className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                  >
+                    <Link
+                      key={i}
+                      className="text-center font-medium text-blue-600 hover:underline capitalize"
+                      href={`/chat/${u._id}`}
+                    >
+                      {`${u.name}`}
+                    </Link>
+                  </th>
+                  <td className="px-6 py-3">{u.language}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <div>
           Users:

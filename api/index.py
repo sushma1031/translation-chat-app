@@ -8,7 +8,7 @@ from datetime import timedelta
 from flask_socketio import SocketIO, emit, join_room
 
 from utils import image, text, audio, subtitles
-from controllers import register_user, login_user, fetch_user, logout_user
+from controllers import register_user, login_user, fetch_users, fetch_user, logout_user
 
 dotenv.load_dotenv()
 
@@ -104,6 +104,20 @@ async def register():
 @app.route("/api/login", methods=['POST'])
 async def login():
   return login_user.validate(request.json.get('email'), request.json.get('password'))
+
+@app.route("/api/users")
+def fetch_all_users():
+  try:
+    users = fetch_users.fetch()
+    return jsonify({
+        "success": True,
+        "data": users
+    }), 200
+  except Exception as e:
+    return jsonify({
+      "error": True,
+      "meesage": str(e)
+  }), 500
   
 @app.route("/api/user-details")
 @jwt_required()
