@@ -20,7 +20,7 @@ class PyObjectId(ObjectId):
         return ObjectId(v)
 
 class Message(BaseModel):
-    original_lang: str = Field(default="english")
+    original_lang: str = Field(default="en")
     text: Optional[str] = Field(default="")
     trans_text: Optional[str] = Field(default="")
     image_url: Optional[str] = Field(default="")
@@ -29,7 +29,7 @@ class Message(BaseModel):
     audio_url: Optional[str] = Field(default="")
     trans_audio_url: Optional[str] = Field(default="")
     seen: Optional[bool] = Field(default=False)
-    sent_by: PyObjectId = Field(..., alias="user_id")
+    sent_by: PyObjectId = Field(..., alias="sent_by")
     sent_at: Optional[datetime] = Field(default_factory=datetime.now)
 
     class Config:
