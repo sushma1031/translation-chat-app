@@ -37,6 +37,14 @@ export default function UserHome() {
     }
   }
 
+  const logoutUser = async () => {
+    const apiConfig = createAPIConfig();
+    const response = await apiConfig.get("/logout");
+    if (response.data.error) return;
+    dispatch(logout());
+    router.push("/login");
+  };
+
   const fetchAvailableUsers = async () => {
     const apiConfig = createAPIConfig();
      try {
@@ -131,10 +139,14 @@ export default function UserHome() {
             </tbody>
           </table>
         </div>
-        <div>
-          Users:
-          TO DO: Fetch users to select from
-          {/* On selecting, do router.push(`/chat/${userId}`) */}
+        <div className="pt-10 text-white">
+          <Button
+            onClick={logoutUser}
+            variant="contained"
+            className="bg-blue-500"
+          >
+            Logout
+          </Button>
         </div>
       </main>
     </>
