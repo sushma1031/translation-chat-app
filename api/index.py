@@ -214,8 +214,6 @@ def handle_chat(sen, rec):
       
     emit("message", chat_msgs.get("messages", []))
 
-      
-
 @socketio.on('new_message')
 def handle_new_message(data):
   from models.Chat import chats, messages, Chat, Message

@@ -18,13 +18,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head><title>{metadata.title}</title></head>
-      <body className={inter.className}>
-        <Provider store={store}>
+      <head>
+        <title>{metadata.title}</title>
+      </head>
+      <Provider store={store}>
+        <body className={inter.className}>
           <p className="text-center items-center">Logo & Navbar</p>
           {children}
-        </Provider>
-      </body>
+        </body>
+      </Provider>
     </html>
-  )
+  );
 }

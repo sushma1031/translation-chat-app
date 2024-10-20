@@ -7,11 +7,20 @@ import { useRouter } from 'next/navigation';
 import { RootState } from './redux/store.ts';
 import { logout, setUser, setOnlineUsers, setSocketConnection } from './redux/userSlice.ts';
 import io from "socket.io-client";
+import { Button } from "@mui/material";
+
+interface User{
+  name: string,
+  language: string,
+  _id: string,
+  profile_pic?: string
+}
 
 export default function UserHome() {
   const user = useSelector((state: RootState) => state?.user);
   const dispatch = useDispatch();
   const router = useRouter();
+  const [chatUsers, setChatUsers] = useState([] as User[])
 
   const fetchUserDetails = async () => {
     const apiConfig = createAPIConfig();
@@ -26,14 +35,6 @@ export default function UserHome() {
     } catch (error) {
       console.log(`Error: ${error}`)
     }
-  }
-
-  const logoutUser = async () => {
-    const apiConfig = createAPIConfig();
-    const response = await apiConfig.get("/logout");
-    if (response.data.error) return;
-    dispatch(logout());
-    router.push("/login");
   }
 
   const fetchAvailableUsers = async () => {
