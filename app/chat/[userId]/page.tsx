@@ -12,7 +12,6 @@ import SendIcon from "@mui/icons-material/Send";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import uploadToCloud from "./util";
-import { useVoiceVisualizer, VoiceVisualizer } from "react-voice-visualizer";
 
 interface UploadedMedia {
   isUploaded: boolean;
@@ -134,9 +133,9 @@ export default function ChatScreen() {
         return "";
       }
       let file = fileInput.files[0];
+      setUploadedMedia((p) => ({ ...p, isUploaded: false }));
       setLoading(true);
       const url = await uploadToCloud(file, type);
-      console.log(url);
       return url;
     };
 
@@ -152,8 +151,6 @@ export default function ChatScreen() {
         imageUrl
       }
     });
-
-    setUploadedMedia((p) => ({ ...p, isUploaded: false }));
 
     if (message.text || audioUrl || imageUrl || videoUrl) {
       if (socketConn) {
@@ -226,7 +223,7 @@ export default function ChatScreen() {
                             ? msg.audio_url
                             : msg.trans_audio_url
                         }
-                        className="w-full h-full object-scale-down"
+                        className="bg-transparent"
                         controls
                       />
                     )}
