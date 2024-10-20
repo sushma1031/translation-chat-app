@@ -105,7 +105,7 @@ def add_subtitles(video_path, subtitle_path):
         i += 1
 
       if prev_end < myvideo.duration:
-        if(myvideo.duration - prev_end) > 0.1:
+        if(myvideo.duration - prev_end) > 0.05:
           subclips.append(myvideo.subclip(prev_end, myvideo.duration))
       final = concatenate_videoclips(subclips)
       name = os.path.basename(video_path)[:-4]
