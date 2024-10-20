@@ -12,11 +12,26 @@ import SendIcon from "@mui/icons-material/Send";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import uploadToCloud from "./util";
+import { useVoiceVisualizer, VoiceVisualizer } from "react-voice-visualizer";
 
 interface UploadedMedia {
   isUploaded: boolean;
   mediaRef: React.MutableRefObject<HTMLInputElement | null>;
   type: "image" | "audio" | "video" | "";
+}
+
+interface Message {
+  original_lang?: string;
+  text?: string;
+  trans_text?: string; 
+  image_url?: string; 
+  video_url?: string; 
+  trans_video_url?: string; 
+  audio_url?: string; 
+  trans_audio_url?: string; 
+  seen?: boolean; 
+  sent_by: string;
+  sent_at?: string;
 }
 
 export default function ChatScreen() {
@@ -33,25 +48,6 @@ export default function ChatScreen() {
     online: false,
     _id: "",
   });
-  useEffect(() => {
-    if (socketConn) {
-      if (!socketConn.connected) {
-        console.log("Socket not connected, attempting to reconnect...");
-        socketConn.connect();
-      }
-      socketConn.emit("chat", params.userId);
-
-      socketConn.on("user_status", (data) => {
-        console.log("Chat receiver data fetched");
-        setChatUser(data);
-      });
-
-      socketConn.on("message", (data) => {
-        console.log("Message data:", data);
-        setChatMsgs(data);
-      });
-    }
-  }, [socketConn, params.userId, user]);
 
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -70,8 +66,38 @@ export default function ChatScreen() {
     videoUrl: "",
   });
   const [loading, setLoading] = useState(false);
-  const [chatMsgs, setChatMsgs] = useState([] as string[]);
-  const currentMessage = useRef(null);
+  const [chatMsgs, setChatMsgs] = useState([] as Message[]);
+  const currentMessage = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (currentMessage.current) {
+      currentMessage.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [chatMsgs]);
+  useEffect(() => {
+    if (socketConn) {
+      if (!socketConn.connected) {
+        console.log("Socket not connected, attempting to reconnect...");
+        socketConn.connect();
+      }
+      socketConn.emit("chat", user?._id, params.userId);
+
+      socketConn.on("user_status", (data) => {
+        console.log("Chat receiver data fetched");
+        setChatUser(data);
+        setChatMsgs(data["prev_messages"])
+      });
+
+      socketConn.on("message", (data) => {
+        console.log("Message data:", data);
+        setLoading(false);
+        setChatMsgs(data);
+      });
+    }
+  }, [socketConn, params.userId, user]);
 
   const clearUpload = (type: "image" | "audio" | "video") => {
     switch (type) {
@@ -101,7 +127,7 @@ export default function ChatScreen() {
       let file = fileInput.files[0];
       setLoading(true);
       const url = await uploadToCloud(file, type);
-      setLoading(false);
+      console.log(url);
       return url;
     };
 
@@ -118,19 +144,22 @@ export default function ChatScreen() {
       }
     });
 
-    if (message.text || message.audioUrl || message.imageUrl || message.videoUrl) {
+    setUploadedMedia((p) => ({ ...p, isUploaded: false }));
+
+    if (message.text || audioUrl || imageUrl || videoUrl) {
       if (socketConn) {
         socketConn.emit("new_message", {
           sender: user?._id,
           receiver: params.userId,
           text: message.text,
-          imageUrl: message.imageUrl,
-          audioUrl: message.audioUrl,
-          videoUrl: message.videoUrl,
+          imageUrl: imageUrl,
+          audioUrl: audioUrl,
+          videoUrl: videoUrl,
           src_lang: user.language,
           dest_lang: chatUser.language,
         });
         console.log("Sent successfully!");
+        setLoading(false);
         setMessage({
           text: "",
           imageUrl: "",
@@ -155,36 +184,48 @@ export default function ChatScreen() {
             {chatMsgs.map((msg, index) => {
               return (
                 <div
-                key={index}
-                  className={
-                    `p-1 py-1 rounded w-fit max-w-[280px] md:max-w-sm lg:max-w-md ml-auto bg-teal-100
-                    }`
-
-                    // user._id === msg?.msgByUserId
-                    //   ? "ml-auto bg-teal-100"
-                    //   : "bg-white"
+                  key={index}
+                  className={`p-1 py-1 rounded w-fit max-w-[280px] md:max-w-sm lg:max-w-md ${
+                    user._id === msg?.sent_by
+                      ? "ml-auto bg-teal-100"
+                      : "bg-white"
                   }
+                    }`}
                 >
                   <div className="w-full relative">
-                    {/* {msg?.imageUrl && (
+                    {msg?.image_url && (
                       <img
-                        src={msg?.imageUrl}
+                        src={msg?.image_url}
                         className="w-full h-full object-scale-down"
                       />
-                    )} */}
-                    {/* {msg?.videoUrl && (
+                    )}
+                    {msg?.video_url && (
                       <video
-                        src={msg.videoUrl}
+                        src={
+                          user._id === msg?.sent_by
+                            ? msg.video_url
+                            : msg.trans_video_url
+                        }
                         className="w-full h-full object-scale-down"
                         controls
                       />
-                    )} */}
+                    )}
+                    {msg?.audio_url && (
+                      <audio
+                        src={
+                          user._id === msg?.sent_by
+                            ? msg.audio_url
+                            : msg.trans_audio_url
+                        }
+                        className="w-full h-full object-scale-down"
+                        controls
+                      />
+                    )}
                   </div>
-                  <p className="px-2">{msg}</p>
-                  {/* should be msg.text */}
-                  <p className="text-xs ml-auto w-fit">
-                    {/* {moment(msg.createdAt).format("hh:mm")} */}
+                  <p className="px-2">
+                    {user._id === msg?.sent_by ? msg.text : msg.trans_text}
                   </p>
+                  <p className="text-xs ml-auto w-fit">{msg.sent_at}</p>
                 </div>
               );
             })}
