@@ -12,10 +12,11 @@ const uploadToCloud = async (file: File, type: "image" | "video") => {
   formData.append("upload_preset", "trans-chat-storage");
   
   try {
-    const response = await axios.post(URL, {
-      method: "post",
-      data: formData
-    })
+    const response = await axios.post(URL, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     // const responseData = await response.json();
     console.log("Upload successful");
     // return responseData["secure_url"];
