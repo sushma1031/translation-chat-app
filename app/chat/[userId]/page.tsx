@@ -31,10 +31,19 @@ interface Message {
   trans_audio_url?: string; 
   seen?: boolean; 
   sent_by: string;
-  sent_at?: string;
+  sent_at: string;
 }
 
 export default function ChatScreen() {
+  const formatTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+  };
+
   const params = useParams();
   const socketConn: Socket | null = useSelector(
     (state: RootState) => state?.user?.socketConnection
@@ -225,7 +234,9 @@ export default function ChatScreen() {
                   <p className="px-2">
                     {user._id === msg?.sent_by ? msg.text : msg.trans_text}
                   </p>
-                  <p className="text-xs ml-auto w-fit">{msg.sent_at}</p>
+                  <p className="text-xs ml-auto w-fit">
+                    {formatTime(msg.sent_at)}
+                  </p>
                 </div>
               );
             })}
