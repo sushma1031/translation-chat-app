@@ -182,6 +182,7 @@ def handle_chat(sen, rec):
         { "sender": other_user_id, "receiver": user_id }
     ]
   })
+    chat_msgs = []
     if chat:
       cursor = chats.aggregate([
         {
@@ -212,7 +213,7 @@ def handle_chat(sen, rec):
         m["sent_by"] = str(m["sent_by"])
         m['sent_at'] = m['sent_at'].isoformat()
       
-    emit("message", chat_msgs.get("messages", []))
+      emit("message", chat_msgs.get("messages", []))
 
 @socketio.on('new_message')
 def handle_new_message(data):

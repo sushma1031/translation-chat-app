@@ -33,6 +33,21 @@ interface Message {
   sent_at: string;
 }
 
+const testMessage: Message = {
+  text: "apple",
+  trans_text: "सेब",
+  sent_by: "67126b669cbba43ac05f80e4",
+  sent_at: "2024-10-20T17:09:17.884000",
+  // video_url:
+  //   "https://res.cloudinary.com/dznw8d1fj/video/upload/v1729324865/trans-chat/audio/hindi-1_cu4wcl.mp4",
+  // trans_video_url:
+  //   "https://res.cloudinary.com/dznw8d1fj/video/upload/v1729324865/trans-chat/audio/hindi-1_cu4wcl.mp4",
+  audio_url:
+    "https://res.cloudinary.com/dznw8d1fj/video/upload/v1729325550/trans-chat/audio/a-hindi-1-translated.mp3",
+  trans_audio_url:
+    "https://res.cloudinary.com/dznw8d1fj/video/upload/v1729325550/trans-chat/audio/a-hindi-1-translated.mp3",
+};
+
 export default function ChatScreen() {
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -78,6 +93,7 @@ export default function ChatScreen() {
   const currentMessage = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    console.log(chatMsgs);
     if (currentMessage.current) {
       currentMessage.current.scrollIntoView({
         behavior: "smooth",
@@ -96,13 +112,13 @@ export default function ChatScreen() {
       socketConn.on("user_status", (data) => {
         console.log("Chat receiver data fetched");
         setChatUser(data);
-        setChatMsgs(data["prev_messages"])
       });
 
       socketConn.on("message", (data) => {
         console.log("Message data:", data);
         setLoading(false);
-        setChatMsgs(data);
+        if(data)
+          setChatMsgs(data);
       });
     }
   }, [socketConn, params.userId, user]);
@@ -187,7 +203,7 @@ export default function ChatScreen() {
       >
         <div>
           <div className="flex flex-col gap-2 py-2 mx-2" ref={currentMessage}>
-            {chatMsgs.map((msg, index) => {
+            {Boolean(chatMsgs) && chatMsgs.map((msg, index) => {
               return (
                 <div
                   key={index}
