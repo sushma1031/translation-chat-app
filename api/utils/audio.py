@@ -77,6 +77,7 @@ def transcribe_audio(audio_file, src):
   return spoken_text
 
 def translate_and_upload_audio(url, source_language, dest_language):
+  print("Translating...")
   save_path = os.path.join("uploads", f"a-{source_language}-1.wav")
   if not download_media(url, save_path):
     return {"error": True, "message": "Could not download media"}
@@ -85,11 +86,12 @@ def translate_and_upload_audio(url, source_language, dest_language):
   try:
     res = translate_text(sp_text, source_language, dest_language)
     if res.get('success', False):
-      print("here")
+      # print("here")
       voice = text_to_voice(res["result"], dest_language, f"a-{source_language}-1")
-      print(save_path[:-4])
+      # print(save_path[:-4])
       url = upload_to_cld(voice, "audio")
       os.remove(voice)
+      print("Audio translated successfully!")
       return {'success': True, 'result': url}
     return res
   except Exception as e:
