@@ -47,7 +47,7 @@ export default function Login() {
         localStorage.setItem("token", response?.data?.token);
 
       }
-      router.push(`/`);
+      router.push(`/chat`);
     } catch (error) {
       console.log(error);
       setStatus("error");
