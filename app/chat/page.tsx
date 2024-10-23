@@ -66,8 +66,11 @@ export default function UserHome() {
 
   useEffect(() => {
     fetchUserDetails();
-    fetchAvailableUsers();
   }, [])
+
+  useEffect(() => {
+    fetchAvailableUsers();
+  }, [user])
 
   // socket connection
   useEffect(() => {
