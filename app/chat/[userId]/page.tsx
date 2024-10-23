@@ -188,6 +188,9 @@ export default function ChatScreen() {
           videoUrl: "",
           audioUrl: ""
         });
+        clearUpload("image");
+        clearUpload("audio");
+        clearUpload("video");
       }
     }
   };
