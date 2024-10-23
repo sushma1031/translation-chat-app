@@ -15,8 +15,6 @@ This is implemented using [`next.config.js` rewrites](https://github.com/vercel/
 
 On localhost, the rewrite will be made to the `127.0.0.1:5328` port, which is where the Flask server is running.
 
-In production, the Flask server is hosted as [Python serverless functions](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python) on Vercel.
-
 ## Getting Started
 
 First, install the dependencies:
