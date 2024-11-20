@@ -3,6 +3,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { Provider } from 'react-redux'
 import { store } from './redux/store'
+import Navbar from './components/Navbar';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -23,7 +24,7 @@ export default function RootLayout({
       </head>
       <Provider store={store}>
         <body className={inter.className}>
-          <p className="text-center items-center">Logo & Navbar</p>
+          <Navbar/>
           {children}
         </body>
       </Provider>
