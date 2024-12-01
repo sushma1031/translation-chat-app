@@ -1,11 +1,10 @@
 import asyncio
 import os
-import subprocess
-# from pathlib import Path
 
 from pydub import AudioSegment 
 import speech_recognition as sr
 from gtts import gTTS
+from faster_whisper import WhisperModel
 
 from utils import languages
 from utils.cloud_store import download_media, upload_to_cld
@@ -57,14 +56,12 @@ def text_to_voice(text_data, to_language, name):
 
 def transcribe_audio(audio_file, src):
   spoken_text =  ''
-  if src == "english":
-    subprocess.run(["sh.exe", "utils/transcribe_english.sh", audio_file, f"{audio_file}-result.txt"]).returncode
-    try:
-      with open(f"{audio_file}-result.txt", "r") as f:
-        spoken_text = f.read()
-    except Exception as e:
-       print(e)
-    os.remove(f"{audio_file}-result.txt")
+  if src == "en":
+    model = WhisperModel("small", local_files_only=True)
+    segments, _ = model.transcribe(audio_file, language="en")  # 'language' is set to 'en' for English
+    transcription = ""
+    for segment in segments:
+        spoken_text += segment.text
   else:
     try:
       rec = sr.Recognizer()
