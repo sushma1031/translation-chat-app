@@ -1,48 +1,24 @@
 from pathlib import Path
-import subprocess
 import os
 
-from utils import languages, translate
-from utils.audio import split_audio
+from utils import languages
 from utils.cloud_store import download_media, upload_to_cld
 
-from moviepy.editor import VideoFileClip, CompositeVideoClip, ImageClip, concatenate_videoclips
-import speech_recognition as sr
-import pysrt
-from PIL import Image, ImageDraw, ImageFont
+import ffmpeg
 
 WV_FOLDER = "current-trans"
 VD_FLDR = f"temp/video/"
 
-def transcribe_audio(audio, src, target_dest, dest='en'):
-  spoken_text =  ''
-  if src == "en":
-    subprocess.run(["sh.exe", "./transcribe_english.sh", audio, target_dest]).returncode
-    print("English transcription generated.")
-    return 0
-    
-  else:
-    chunks = split_audio(audio_path=audio)
-    
-    for chunk in chunks:
-      rec = sr.Recognizer()
-      with sr.WavFile(chunk) as source:              
-          audio = rec.record(source)
-      try:
-        print("translating chunk...")
-        spoken_text = rec.recognize_google(audio, language=src)
-        translation = translate.translate_single(spoken_text, src, "en")
-        with open(target_dest, "a") as f:
-          f.write(translation.text + " ")
-        
-      except Exception as e:
-        print(e)
-        print("Error: Could not transcribe audio.")
-        return -1
-        
-  print("English translation generated.")
-  return 0
-    
+def transcribe_audio(audio, src, dest='en'):
+  from faster_whisper import WhisperModel
+  try:
+    model = WhisperModel("small", local_files_only=True)
+    segments, _ = model.transcribe(audio, language=src, task="translate")
+    print("English translation generated.")
+    return segments
+  except Exception as e:
+    print("Error transcribing audio:", e)
+    return None
 
 def extract_audio(video, name):
   if Path(WV_FOLDER).exists():
@@ -51,77 +27,58 @@ def extract_audio(video, name):
       return None
     
   Path(WV_FOLDER).mkdir(exist_ok=True)
-
-  # video_path = f"{VD_FLDR}/{video}"
-  video_path = video
-  temp = VideoFileClip(video_path)
-  audio_clip = temp.audio
+  
   path = f"{WV_FOLDER}/{name}.wav"
-  audio_clip.write_audiofile(path)
-  print("Audio extraction complete.")
-  temp.close()
+  stream = ffmpeg.input(video)
+  stream = ffmpeg.output(stream, path)
+  ffmpeg.run(stream, overwrite_output=True)
+
   return f"{name}.wav"
 
-def srt_time_to_seconds(srt_time):
-    return srt_time.hours * 3600 + srt_time.minutes * 60 + srt_time.seconds + srt_time.milliseconds / 1000
+def format_time(seconds):
+    hours = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    milliseconds = round((seconds - int(seconds)) * 1000)
+    seconds = int(seconds)
+    formatted_time = f"{hours:02d}:{minutes:02d}:{seconds:01d},{milliseconds:03d}"
+
+    return formatted_time
+
+def generate_subtitle_file(segments):
+    subtitle_file = f"{WV_FOLDER}/en-subtitles.srt"
+    text = ""
+    try:
+      for index, segment in enumerate(segments):
+          segment_start = format_time(segment.start)
+          segment_end = format_time(segment.end)
+          text += f"{str(index+1)} \n"
+          text += f"{segment_start} --> {segment_end} \n"
+          text += f"{segment.text} \n"
+          text += "\n"
+          
+      with open(subtitle_file, "w") as f:
+        f.write(text)
+      print("\nSubtitles generated.")
+      return True
+    except Exception as e:
+      print(e)
+      return False
 
 def add_subtitles(video_path, subtitle_path):
   try:
-    subtitles = pysrt.open(subtitle_path)
-    folder = "current-trans/subtitles"
-    os.makedirs(folder, exist_ok=True)
+    video_input_stream = ffmpeg.input(video_path)
+    name = os.path.basename(video_path)[:-4]
+    output_video = f"{WV_FOLDER}/{name}-final.mp4"
+    stream = ffmpeg.output(video_input_stream, output_video, vf=f"subtitles={subtitle_path}")
+    ffmpeg.run(stream, overwrite_output=True)
+    print("Subtitles added.")
 
-    subclips = []
-    prev_end = 0
-    # abs_video_path = os.path.join(os.getcwd(), "uploads", video_path)
-    os.path.normpath
-    fnt = ImageFont.truetype('assets/fonts/OpenSans-Regular.ttf', 30)
-    # os.chdir("uploads")
-
-    with VideoFileClip(video_path) as myvideo:
-      i = 0
-      for st in subtitles:
-        start_time = srt_time_to_seconds(st.start)
-        end_time = srt_time_to_seconds(st.end)
-
-        if start_time > prev_end:
-          non_subclip = myvideo.subclip(prev_end, start_time)
-          subclips.append(non_subclip)
-
-        clip = myvideo.subclip(start_time, end_time)
-        
-        img = Image.new('RGB', (700, 150))
-        
-        d = ImageDraw.Draw(img)
-        d.text((15, 25), st.text, font=fnt, fill=(255, 255, 255))
-        img.save(f'{folder}/{i}.png')
-
-        stclip = ImageClip(f'{folder}/{i}.png', duration=clip.duration)
-        stclip = stclip.set_position(('center', 0.85), relative=True)
-        subclips.append(CompositeVideoClip([clip, stclip]))
-
-        prev_end = end_time
-
-        i += 1
-
-      if prev_end < myvideo.duration:
-        if(myvideo.duration - prev_end) > 0.05:
-          subclips.append(myvideo.subclip(prev_end, myvideo.duration))
-      final = concatenate_videoclips(subclips)
-      name = os.path.basename(video_path)[:-4]
-      final.write_videofile(f"{WV_FOLDER}/{name}-final.mp4", fps=myvideo.fps)
-      print("Subtitles added.")
-      # TODO save in cloudinary and get link
     url = upload_to_cld(f"{WV_FOLDER}/{name}-final.mp4", "video")
-    for im in os.listdir(folder):
-      os.remove(os.path.join(folder, im))
-    os.rmdir(folder)
-    for file in os.listdir(WV_FOLDER):
-      os.remove(os.path.join(WV_FOLDER, file))
-    
     return url
   except Exception as e:
-    print(f"{e}")
+    print(e)
     return ""
   
 def generate_st_and_upload(url, source_language, dest_language="english"):
@@ -137,17 +94,15 @@ def generate_st_and_upload(url, source_language, dest_language="english"):
       return {'error': True, 'message': "Error: Could not extract audio"}
     print("Transcribing text...")
     result = transcribe_audio(f"{WV_FOLDER}/{audio_path}", src, f"{WV_FOLDER}/en-translation.txt")
-    if result == -1:
+    if not result:
       return {'error': True, 'message': "Error: Could not transcribe audio"}
     print("Generating subtitles...")
-    subprocess.run(["sh.exe", "utils/transcribe_align_to_english.sh", audio_path, src]).returncode
-    print("\nSubtitles generated.")
+    if not generate_subtitle_file(result):
+      return {'error': True, 'message': "Error: Could not generate subtitles"}
     print("\nAdding subtitles...")
     # print(os.getcwd())
-    res = add_subtitles(f"{video}", f"{WV_FOLDER}/en-subtitles.srt")
+    res = add_subtitles(video, f"{WV_FOLDER}/en-subtitles.srt")
     if not res:
-      for file in os.listdir(WV_FOLDER):
-        os.remove(file)
       return {'error': True, 'message': "Error: Could not add subtitles"}
     
     return {'success': True, 'result': res}
