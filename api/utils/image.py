@@ -25,6 +25,7 @@ def translate_img_text(image, src, dest):
     print("Translating text...")
     results = translate.translate_batch(extracted_text, dest)
     translations = [translation.text for translation in results]
+    print("Text translated.")
     return translations
 
 def download_and_translate_img(url, source_language, dest_language):
