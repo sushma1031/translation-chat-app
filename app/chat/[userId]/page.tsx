@@ -37,6 +37,11 @@ interface Message {
   sent_at: string;
 }
 
+interface Loading {
+  isLoading: boolean;
+  process?: string;
+}
+
 const testMessage: Message = {
   text: "apple",
   trans_text: "सेब",
@@ -125,7 +130,7 @@ export default function ChatScreen() {
     audioUrl: "",
     videoUrl: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState({isLoading: false} as Loading);
   const [chatMsgs, setChatMsgs] = useState([] as Message[]);
   const currentMessage = useRef<HTMLDivElement | null>(null);
 
@@ -153,7 +158,7 @@ export default function ChatScreen() {
 
       socketConn.on("message", (data) => {
         console.log("Message data:", data);
-        setLoading(false);
+        setLoading({ isLoading: false});
         if(data)
           setChatMsgs(data);
       });
@@ -187,7 +192,7 @@ export default function ChatScreen() {
       }
       let file = fileInput.files[0];
       setUploadedMedia((p) => ({ ...p, isUploaded: false }));
-      setLoading(true);
+      setLoading({isLoading: true, process: "Uploading"});
       const url = await uploadToCloud(file, type);
       return url;
     };
@@ -206,6 +211,8 @@ export default function ChatScreen() {
     });
 
     if (message.text || audioUrl || imageUrl || videoUrl) {
+      // if(!message.text)
+      //   setLoading({ isLoading: true, process: "Sending" });
       if (socketConn) {
         socketConn.emit("new_message", {
           sender: user?._id,
@@ -218,7 +225,8 @@ export default function ChatScreen() {
           dest_lang: chatUser.language,
         });
         console.log("Sent successfully!");
-        setLoading(false);
+        if (audioUrl || imageUrl || videoUrl)
+          setLoading({ isLoading: true, process: "Translating" });
         setMessage({
           text: "",
           imageUrl: "",
@@ -328,9 +336,9 @@ export default function ChatScreen() {
               </div>
             )}
         </div>
-        {loading && (
-          <div className="w-full h-full flex sticky bottom-0 justify-center items-center">
-            <p>Loading...</p>
+        {loading.isLoading && (
+          <div className="w-full h-full bg-slate-700 bg-opacity-30 flex sticky bottom-0 justify-center items-center">
+            <p>{loading.process}...</p>
           </div>
         )}
       </section>
