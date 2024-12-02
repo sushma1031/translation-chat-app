@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useEffect, useState, useRef, FormEvent } from "react";
 import { Socket } from "socket.io-client";
+import { AudioRecorder, useAudioRecorder } from "react-audio-voice-recorder";
 import ImageIcon from "@mui/icons-material/Image";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import AudioFileIcon from "@mui/icons-material/AudioFile";
@@ -11,12 +12,15 @@ import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
+import DeleteIcon from "@mui/icons-material/Delete";
 import uploadToCloud from "./util";
 
 interface UploadedMedia {
   isUploaded: boolean;
   mediaRef: React.MutableRefObject<HTMLInputElement | null>;
   type: "image" | "audio" | "video" | "";
+  recording?: boolean;
+  recordingUrl?: string;
 }
 
 interface Message {
@@ -82,6 +86,39 @@ export default function ChatScreen() {
     } as React.MutableRefObject<HTMLInputElement | null>,
     type: ""
   } as UploadedMedia);
+
+  const recorderControls = useAudioRecorder(
+    {
+      noiseSuppression: true,
+      echoCancellation: true,
+    },
+    (err) => console.table(err) // onNotAllowedOrFound
+  );
+  const [discardRecording, setDiscardRecording] = useState(false);
+
+  const handleRecordingComplete = (blob: globalThis.Blob) => {
+    if (discardRecording) {
+      console.log("Discarded!");
+      recorderControls.recordingBlob = undefined;
+      setDiscardRecording(false);
+      return;
+    }
+    const file = new File([blob], "recorded-audio.wav", { type: "audio/wav" });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    if (audioInputRef.current) {
+      audioInputRef.current.files = dataTransfer.files;
+    }
+    const url = URL.createObjectURL(blob);
+    setUploadedMedia({
+      isUploaded: true,
+      mediaRef: audioInputRef,
+      type: "audio",
+      recording: true,
+      recordingUrl: url
+    });
+  };
+
   const [message, setMessage] = useState({
     text: "",
     imageUrl: "",
@@ -129,7 +166,7 @@ export default function ChatScreen() {
       case "audio": if (audioInputRef.current) audioInputRef.current.value = '';
       case "video": if (videoInputRef.current) videoInputRef.current.value = '';
     }
-    setUploadedMedia((prev) => ({ ...prev, isUploaded: false, type: "" }));
+    setUploadedMedia((prev) => ({ ...prev, isUploaded: false, type: "", recording: undefined, recordingUrl: undefined }));
   }
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -271,13 +308,23 @@ export default function ChatScreen() {
                     <CloseIcon />
                   </IconButton>
                 </div>
-                <div className="bg-white p-3">
-                  {/* <img
+                {uploadedMedia.recording && uploadedMedia.recordingUrl ? (
+                  <audio
+                    src={uploadedMedia.recordingUrl}
+                    controls
+                    className="bg-transparent"
+                  />
+                ) : (
+                  <div className="bg-white p-3">
+                    {/* <img
                     // src={imageInputRef.current}
                     className="aspect-square w-full h-full max-w-sm m-2 object-scale-down"
                   /> */}
-                  <p>Media: {uploadedMedia.mediaRef.current?.files[0].name}</p>
-                </div>
+                    <p>
+                      Media: {uploadedMedia.mediaRef.current?.files[0].name}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
         </div>
@@ -292,6 +339,30 @@ export default function ChatScreen() {
           <div className="ps-3 flex justify-center items-center">
             {/* upload media */}
             <form className="flex gap-2">
+              <div
+                className={`flex ${
+                  recorderControls.isRecording && `bg-slate-200 rounded-full`
+                }`}
+              >
+                <AudioRecorder
+                  onRecordingComplete={handleRecordingComplete}
+                  recorderControls={recorderControls}
+                  showVisualizer={true}
+                />
+                {recorderControls.isRecording && (
+                  <Tooltip title="Discard recording">
+                    <IconButton
+                      disableRipple
+                      onClick={() => {
+                        setDiscardRecording(true);
+                        recorderControls.stopRecording();
+                      }}
+                    >
+                      <DeleteIcon style={{ color: "black" }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </div>
               <Tooltip title="Audio">
                 <label
                   htmlFor="uploadAudio"
@@ -322,7 +393,6 @@ export default function ChatScreen() {
                   </div>
                 </label>
               </Tooltip>
-
               <input
                 type="file"
                 id="uploadAudio"
