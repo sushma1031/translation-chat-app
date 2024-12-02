@@ -13,6 +13,7 @@ import SendIcon from "@mui/icons-material/Send";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Avatar from "@mui/material/Avatar";
 import uploadToCloud from "./util";
 
 interface UploadedMedia {
@@ -241,10 +242,15 @@ export default function ChatScreen() {
   };
   return (
     <>
-      <p className="pb-2">
-        Messages with {chatUser.name}!{" "}
-        {`(Currently ${chatUser.online ? "online" : "offline"})`}
-      </p>
+      <div className="flex ps-2 py-2 items-center gap-2">
+        <Avatar sx={{ bgcolor: "#6a36ad" }}>
+          {chatUser.name[0].toUpperCase()}
+        </Avatar>
+        <div>
+          <p className="capitalize mb-0">{chatUser.name}</p>
+          <p className="text-xs">{chatUser.online ? "online" : "offline"}</p>
+        </div>
+      </div>
       <section
         id="messages"
         className="h-[calc(100vh-128px)] bg-blue-200 overflow-x-hidden overflow-y-scroll"
