@@ -253,7 +253,7 @@ export default function ChatScreen() {
       </div>
       <section
         id="messages"
-        className="h-[calc(100vh-128px)] bg-blue-200 overflow-x-hidden overflow-y-scroll"
+        className="h-[calc(100vh-128px)] bg-violet-200 overflow-x-hidden overflow-y-scroll"
       >
         <div>
           <div className="flex flex-col gap-2 py-2 mx-2" ref={currentMessage}>
@@ -263,7 +263,7 @@ export default function ChatScreen() {
                   key={index}
                   className={`p-1 py-1 rounded w-fit max-w-[280px] md:max-w-sm lg:max-w-md ${
                     user._id === msg?.sent_by
-                      ? "ml-auto bg-teal-100"
+                      ? "ml-auto bg-emerald-100"
                       : "bg-white"
                   }
                     }`}
