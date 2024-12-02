@@ -4,9 +4,8 @@ flask-cors
 python-bidi
 easyocr
 cloudinary
-moviepy
-pysrt
-pillow
+speech-recognition
+googletrans
 pydub
 pymongo
 pydantic[email]
@@ -14,3 +13,8 @@ flask-bcrypt
 Flask-JWT-Extended
 flask-socketio
 eventlet
+python-dotenv
+transformers
+faster-whisper 
+ffmpeg-python
+# torch also, check website for instructions
