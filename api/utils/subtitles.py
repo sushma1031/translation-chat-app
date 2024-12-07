@@ -13,7 +13,11 @@ def transcribe_audio(audio, src, dest='en'):
   from faster_whisper import WhisperModel
   try:
     model = WhisperModel("small", local_files_only=True)
-    segments, _ = model.transcribe(audio, language=src, task="translate")
+    segments = []
+    if src == 'en':
+      segments, _ = model.transcribe(audio)
+    else:
+      segments, _ = model.transcribe(audio, language=src, task="translate")
     print("English translation generated.")
     return segments
   except Exception as e:
