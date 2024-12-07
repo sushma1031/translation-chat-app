@@ -280,7 +280,7 @@ export default function ChatScreen() {
                         src={
                           user._id === msg?.sent_by
                             ? msg.video_url
-                            : msg.trans_video_url
+                            : (msg.trans_video_url? msg.trans_video_url : msg.video_url)
                         }
                         className="w-full h-full object-scale-down"
                         controls
@@ -291,7 +291,7 @@ export default function ChatScreen() {
                         src={
                           user._id === msg?.sent_by
                             ? msg.audio_url
-                            : msg.trans_audio_url
+                            : (msg.trans_audio_url? msg.trans_audio_url : msg.audio_url)
                         }
                         className="bg-transparent"
                         controls
@@ -299,7 +299,7 @@ export default function ChatScreen() {
                     )}
                   </div>
                   <p className="px-2">
-                    {user._id === msg?.sent_by ? msg.text : msg.trans_text}
+                    {user._id === msg?.sent_by ? msg.text : (msg.trans_text ? msg.trans_text : msg.text)}
                   </p>
                   <p className="text-xs ml-auto w-fit">
                     {formatTime(msg.sent_at)}
