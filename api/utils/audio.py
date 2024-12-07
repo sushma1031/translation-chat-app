@@ -1,52 +1,41 @@
 import asyncio
 import os
 
-from pydub import AudioSegment 
 import speech_recognition as sr
 from gtts import gTTS
 from faster_whisper import WhisperModel
 
 from utils import languages
 from utils.cloud_store import download_media, upload_to_cld
-from utils.text import translate_text
 
-
-def split_audio(audio_path, folder=None):
-  audio = AudioSegment.from_wav(audio_path)
-  
-  if not folder:
-    folder = "audio_chunks"
-  else:
-    folder += "/audio_chunks"
-  
-  try: 
-    os.mkdir(folder) 
-  except FileExistsError: 
-    pass 
-
-  i = 0
-  count = 0
-  duration = 10000
-  audio_length = audio.duration_seconds * 1000
-  audio_chunk_paths = []
-  while(i+duration < audio_length):
-    chunk = audio[i:(i+duration)]
-    print(f"saving chunk-{count}.wav") 
-
-    chunk.export(f"{folder}/chunk-{count}.wav", bitrate ='192k', format ="wav")
-    audio_chunk_paths.append(f"{folder}/chunk-{count}.wav") 
-
-    i += duration
-    count += 1
-
-  if(i<audio_length):
-    chunk = audio[i:audio_length]
-    print(f"saving chunk-{count}.wav") 
-
-    chunk.export(f"{folder}/chunk-{count}.wav", bitrate ='192k', format ="wav")
-    audio_chunk_paths.append(f"{folder}/chunk-{count}.wav")
-
-  return audio_chunk_paths
+# def split_audio(audio_path, folder=None):
+#   audio = AudioSegment.from_wav(audio_path)  
+#   if not folder:
+#     folder = "audio_chunks"
+#   else:
+#     folder += "/audio_chunks"  
+#   try: 
+#     os.mkdir(folder) 
+#   except FileExistsError: 
+#     pass 
+#   i = 0
+#   count = 0
+#   duration = 10000
+#   audio_length = audio.duration_seconds * 1000
+#   audio_chunk_paths = []
+#   while(i+duration < audio_length):
+#     chunk = audio[i:(i+duration)]
+#     print(f"saving chunk-{count}.wav") 
+#     chunk.export(f"{folder}/chunk-{count}.wav", bitrate ='192k', format ="wav")
+#     audio_chunk_paths.append(f"{folder}/chunk-{count}.wav") 
+#     i += duration
+#     count += 1
+#   if(i<audio_length):
+#     chunk = audio[i:audio_length]
+#     print(f"saving chunk-{count}.wav") 
+#     chunk.export(f"{folder}/chunk-{count}.wav", bitrate ='192k', format ="wav")
+#     audio_chunk_paths.append(f"{folder}/chunk-{count}.wav")
+#   return audio_chunk_paths
 
 def text_to_voice(text_data, to_language, name):
   dest = languages.get_language_code(to_language)
