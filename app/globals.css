@@ -37,3 +37,8 @@ body {
   padding-right: 5px;
   font-weight: bold;
 }
+
+.contained-button {
+  background-color: #1976d2;
+  text-transform: capitalize;
+}
