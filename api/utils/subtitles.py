@@ -40,7 +40,7 @@ def extract_audio(video, name):
   return f"{name}.wav"
 
 def format_time(seconds):
-    hours = seconds // 3600
+    hours = int(seconds // 3600)
     seconds %= 3600
     minutes = int(seconds // 60)
     seconds %= 60
@@ -108,11 +108,17 @@ def generate_st_and_upload(url, source_language, dest_language="english"):
     res = add_subtitles(video, f"{WV_FOLDER}/en-subtitles.srt")
     if not res:
       return {'error': True, 'message': "Error: Could not add subtitles"}
-    
+    clear_folder()
     return {'success': True, 'result': res}
   except Exception as e:
     print(e)
+    clear_folder()
     return {'message': f"{e}", "error": True}
+
+def clear_folder():
+  temp_files = os.listdir(WV_FOLDER)
+  for f in temp_files:
+    os.remove(f"{WV_FOLDER}/{f}")
   
 if __name__ == "__main__":
   print("all imports are proper")
