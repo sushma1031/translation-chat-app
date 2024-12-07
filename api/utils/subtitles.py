@@ -42,7 +42,7 @@ def extract_audio(video, name):
 def format_time(seconds):
     hours = seconds // 3600
     seconds %= 3600
-    minutes = seconds // 60
+    minutes = int(seconds // 60)
     seconds %= 60
     milliseconds = round((seconds - int(seconds)) * 1000)
     seconds = int(seconds)
