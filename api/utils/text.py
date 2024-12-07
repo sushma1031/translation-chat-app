@@ -1,10 +1,10 @@
 from utils import languages, translate
 
-def translate_text(text, src, dest):
+def translate_text(text, src, dest, translator):
   s_code = languages.get_language_code(src)
   d_code = languages.get_language_code(dest)
   try:
-    res = translate.translate_single(text, s_code, d_code)
+    res = translate.translate_single(text, s_code, d_code, translator)
     return {'success': True, 'result': res}
   except Exception as e:
     print(e)

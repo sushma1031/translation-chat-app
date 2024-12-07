@@ -5,7 +5,7 @@ import speech_recognition as sr
 from gtts import gTTS
 from faster_whisper import WhisperModel
 
-from utils import languages
+from utils import languages, translate
 from utils.cloud_store import download_media, upload_to_cld
 
 # def split_audio(audio_path, folder=None):
@@ -62,7 +62,7 @@ def transcribe_audio(audio_file, src):
   
   return spoken_text
 
-def translate_and_upload_audio(url, source_language, dest_language):
+def translate_and_upload_audio(url, source_language, dest_language, translator):
   print("Translating...")
   save_path = os.path.join("uploads", f"a-{source_language}-1.wav")
   if not download_media(url, save_path):
@@ -70,16 +70,16 @@ def translate_and_upload_audio(url, source_language, dest_language):
   sp_text = ''
   sp_text = transcribe_audio(save_path, source_language)
   try:
-    res = translate_text(sp_text, source_language, dest_language)
-    if res.get('success', False):
+    res = translate.translate_single(sp_text, source_language, dest_language, translator)
+    if res:
       # print("here")
-      voice = text_to_voice(res["result"], dest_language, f"a-{source_language}-1")
+      voice = text_to_voice(res, dest_language, f"a-{source_language}-1")
       # print(save_path[:-4])
       url = upload_to_cld(voice, "audio")
       os.remove(voice)
       print("Audio translated successfully!")
       return {'success': True, 'result': url}
-    return res
+    return {'message': f"Could not translate audio", "error": True}
   except Exception as e:
     print(e)
     return {'message': f"{e}", "error": True}

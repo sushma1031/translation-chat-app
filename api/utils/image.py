@@ -13,27 +13,28 @@ def load_ocr_model(langs):
   return reader
 
 def extract_image_text(image_path, reader):
-  result = reader.readtext(image_path)
-  text = [r[1] for r in result]
+  result = reader.readtext(image_path, detail = 0)
+  # text = [r[1] for r in result]
+  text = result
   return text
 
-def translate_img_text(image, src, dest):
+def translate_img_text(image, src, dest, translator):
     print("Loading model...")
     reader = load_ocr_model([src, 'english'])
     print("Extracting text...")
     extracted_text = extract_image_text(image, reader)
     print("Translating text...")
-    results = translate.translate_batch(extracted_text, dest)
+    results = translate.translate_batch(extracted_text, dest, translator)
     translations = [translation.text for translation in results]
     print("Text translated.")
     return translations
 
-def download_and_translate_img(url, source_language, dest_language):
+def download_and_translate_img(url, source_language, dest_language, translator):
   save_path = os.path.join("uploads", f"i-{source_language}-1.jpg")
   if not download_media(url, save_path):
     return {"error": True, "message": "Could not download media"}
   try:
-    res = translate_img_text(save_path, source_language, dest_language)
+    res = translate_img_text(save_path, source_language, dest_language, translator)
     return {'success': True, 'result': res}
   except Exception as e:
     print(e)
