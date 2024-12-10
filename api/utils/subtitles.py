@@ -12,7 +12,7 @@ VD_FLDR = f"temp/video/"
 def transcribe_audio(audio, src, dest='en'):
   from faster_whisper import WhisperModel
   try:
-    model = WhisperModel("small", local_files_only=True)
+    model = WhisperModel("small", local_files_only=True,compute_type="float32")
     segments = []
     if src == 'en':
       segments, _ = model.transcribe(audio)

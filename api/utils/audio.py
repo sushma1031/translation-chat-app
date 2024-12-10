@@ -46,7 +46,7 @@ def text_to_voice(text_data, to_language, name):
 def transcribe_audio(audio_file, src):
   spoken_text =  ''
   if src == "en":
-    model = WhisperModel("small", local_files_only=True)
+    model = WhisperModel("small", local_files_only=True, compute_type="float32")
     segments, _ = model.transcribe(audio_file, language="en")  # 'language' is set to 'en' for English
     transcription = ""
     for segment in segments:
