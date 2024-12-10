@@ -7,7 +7,7 @@ import sys
 from datetime import timedelta
 from flask_socketio import SocketIO, emit, join_room
 
-from utils import image, text, audio, subtitles
+from utils import image, text, audio, subtitles, translate
 from controllers import register_user, login_user, fetch_users, fetch_user, logout_user
 
 dotenv.load_dotenv()
@@ -24,6 +24,7 @@ app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 jwt = JWTManager(app)
 
 socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000", async_mode='eventlet')
+translator = translate.load_translator()
 
 @app.route('/')
 def index():
@@ -41,7 +42,7 @@ async def translate_text():
   src = data['src']   
   dest = data['dest']
   url = data['text']
-  result = text.translate_text(url, src, dest)
+  result = text.translate_text(url, src, dest, translator)
   if result.get('success', False):
      return jsonify(result), 200
   return jsonify(result), 500
@@ -58,7 +59,7 @@ async def translate_image():
   dest = data['dest']
   url = data['url']
   
-  result = image.download_and_translate_img(url, src, dest)
+  result = image.download_and_translate_img(url, src, dest, translator)
   if result.get('success', False):
      return jsonify(result), 200
   return jsonify(result), 500
@@ -74,11 +75,24 @@ async def translate_audio():
   src = data['src']   
   dest = data['dest']
   url = data['url']
-  result = audio.translate_and_upload_audio(url, src, dest)
+  result = audio.translate_and_upload_audio(url, src, dest, translator)
   if result.get('success', False):
      return jsonify(result), 200
   return jsonify(result), 500
-    
+
+
+# @app.route("/api/translate/realtime", method=['POST'])
+# async def translate_realtime():
+#   """
+#   src: source language code
+#   dest: destination language code
+#   url: url of media
+#   """
+#   data = request.get_json()
+#   src = data['src']   
+#   dest = data['dest']
+#   url = data['url']
+   
 
 @app.route("/api/translate/subtitles", methods=['POST'])
 async def generate_subtitles():
@@ -249,15 +263,15 @@ def handle_new_message(data):
   dest_code = data["dest_lang"]
   if not (src_code == dest_code):
     if data["text"]:
-      result = text.translate_text(data["text"], src_code, dest_code)
+      result = text.translate_text(data["text"], src_code, dest_code, translator)
       if result.get('success', False):
           new_message.trans_text = result.get('result')
     elif data["audioUrl"]:
-      result = audio.translate_and_upload_audio(data["audioUrl"], src_code, dest_code)
+      result = audio.translate_and_upload_audio(data["audioUrl"], src_code, dest_code, translator)
       if result.get('success', False):
           new_message.trans_audio_url = result.get('result')
     elif data["imageUrl"]:
-      result =  image.download_and_translate_img(data["imageUrl"], src_code, dest_code)
+      result =  image.download_and_translate_img(data["imageUrl"], src_code, dest_code, translator)
       if result.get('success', False):
           new_message.trans_text = "; ".join(result.get('result'))
     elif data["videoUrl"]:
@@ -266,7 +280,7 @@ def handle_new_message(data):
           new_message.trans_video_url = result.get('result')
 
   mresult = messages.insert_one(new_message.model_dump())
-  # TODO update conversation
+  # update conversation
   chats.update_one({"_id": chat["_id"]}, {
      "$push": {"messages": mresult.inserted_id}
   })
@@ -311,4 +325,5 @@ def handle_new_message(data):
   
 
 if __name__ == "__main__":
-  socketio.run(app, port=5328, debug=True)
+  print("Starting server on port 5328...")
+  socketio.run(app, port=5328, debug=False)
