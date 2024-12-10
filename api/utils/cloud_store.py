@@ -24,7 +24,7 @@ def download_media(url, filepath):
                 "-i", webm_file,
                 filepath         
             ],
-            check=True
+            check=True,
             stdout=subprocess.DEVNULL
         )
       print(".wav conversion successful")
