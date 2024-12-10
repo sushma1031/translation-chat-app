@@ -54,6 +54,7 @@ def transcribe_audio(audio_file, src):
   else:
     try:
       rec = sr.Recognizer()
+      audio = ''
       with sr.WavFile(audio_file) as source:              
           audio = rec.record(source)
       spoken_text = rec.recognize_google(audio)   
@@ -64,7 +65,7 @@ def transcribe_audio(audio_file, src):
 
 def translate_and_upload_audio(url, source_language, dest_language, translator):
   print("Translating...")
-  save_path = os.path.join("uploads", f"a-{source_language}-1.wav")
+  save_path = f"uploads/a-{source_language}-1.wav"
   if not download_media(url, save_path):
     return {"error": True, "message": "Could not download media"}
   sp_text = ''

@@ -5,14 +5,33 @@ import dotenv
 import os
 from pathlib import Path
 import requests
+import ffmpeg
+import subprocess
 
 CLOUD_DIR="trans-chat"
 
 def download_media(url, filepath):
   response = requests.get(url)
   try:
-    with open(filepath, "wb") as f:
-      f.write(response.content)
+    if url.endswith("webm"):
+      webm_file = f"uploads/temp.webm"
+      with open(webm_file, "wb") as f:
+        f.write(response.content)
+      subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i", webm_file,
+                filepath         
+            ],
+            check=True
+            stdout=subprocess.DEVNULL
+        )
+      print(".wav conversion successful")
+      os.remove(webm_file)
+    else:
+      with open(filepath, "wb") as f:
+        f.write(response.content)
     return True
   except Exception as e:
     print(f"Error: {e}")
