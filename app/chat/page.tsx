@@ -95,11 +95,10 @@ export default function UserHome() {
 
   return (
     <>
-      <h1 className="text-center py-3">User Home</h1>
-      <main className="text-center mx-auto">
+      <main className="text-center mx-auto mt-4">
         <div className="w-full items-center justify-center text-sm lg:flex">
-          <p className="text-center pb-5">
-            Hi <span className="capitalize">{user.name}</span>! Your preferred
+          <p className="text-center pb-5 text-lg">
+            Hi <span className="font-bold">{user.name}</span>! Your preferred
             language of communication is:{" "}
             <span className="code bg-blue-100">{user.language}</span>
           </p>
