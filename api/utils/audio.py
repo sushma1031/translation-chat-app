@@ -66,7 +66,7 @@ def transcribe_audio(audio_file, src):
 def translate_and_upload_audio(url, source_language, dest_language, translator):
   print("Translating...")
   save_path = f"uploads/a-{source_language}-1.wav"
-  if not download_media(url, save_path):
+  if not download_media(url, save_path, source_language):
     return {"error": True, "message": "Could not download media"}
   sp_text = ''
   sp_text = transcribe_audio(save_path, source_language)

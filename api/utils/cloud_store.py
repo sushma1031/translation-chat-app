@@ -10,10 +10,10 @@ import subprocess
 
 CLOUD_DIR="trans-chat"
 
-def download_media(url, filepath):
+def download_media(url, filepath, src=None):
   response = requests.get(url)
   try:
-    if url.endswith("webm"):
+    if url.endswith("webm") and src != 'en':
       webm_file = f"uploads/temp.webm"
       with open(webm_file, "wb") as f:
         f.write(response.content)
