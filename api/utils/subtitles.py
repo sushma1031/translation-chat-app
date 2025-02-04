@@ -27,14 +27,13 @@ def transcribe_audio(audio, src, dest='en'):
 def extract_audio(video, name):
   if Path(WV_FOLDER).exists():
     if len(os.listdir(WV_FOLDER)) > 0:
-      print("Error: Empty folder 'current-trans' and retry")
-      return None
-    
-  Path(WV_FOLDER).mkdir(exist_ok=True)
+      clear_folder()
+  else:  
+    Path(WV_FOLDER).mkdir(exist_ok=True)
   
   path = f"{WV_FOLDER}/{name}.wav"
   stream = ffmpeg.input(video)
-  stream = ffmpeg.output(stream, path)
+  stream = ffmpeg.output(stream, path, loglevel="quiet")
   ffmpeg.run(stream, overwrite_output=True)
 
   return f"{name}.wav"
@@ -75,7 +74,7 @@ def add_subtitles(video_path, subtitle_path):
     video_input_stream = ffmpeg.input(video_path)
     name = os.path.basename(video_path)[:-4]
     output_video = f"{WV_FOLDER}/{name}-final.mp4"
-    stream = ffmpeg.output(video_input_stream, output_video, vf=f"subtitles={subtitle_path}")
+    stream = ffmpeg.output(video_input_stream, output_video, vf=f"subtitles={subtitle_path}", loglevel="quiet")
     ffmpeg.run(stream, overwrite_output=True)
     print("Subtitles added.")
 
