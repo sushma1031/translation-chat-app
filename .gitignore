@@ -43,3 +43,8 @@ __pycache__
 translated/
 uploads/
 current-trans/
+temp/
+*.mp4
+*.mp3
+*.wav
+*.jpg
