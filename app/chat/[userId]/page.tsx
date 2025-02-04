@@ -136,7 +136,7 @@ export default function ChatScreen() {
   const currentMessage = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    console.log(chatMsgs);
+    // console.log(chatMsgs);
     if (currentMessage.current) {
       currentMessage.current.scrollIntoView({
         behavior: "smooth",
@@ -158,7 +158,8 @@ export default function ChatScreen() {
       });
 
       socketConn.on("message", (data) => {
-        console.log("Message data:", data);
+        // console.log("Message data:", data);
+        // console.log("Message received!");
         setLoading({ isLoading: false});
         if(data)
           setChatMsgs(data);
@@ -244,7 +245,7 @@ export default function ChatScreen() {
     <>
       <div className="flex ps-2 py-2 items-center gap-2">
         <Avatar sx={{ bgcolor: "#6a36ad" }}>
-          {chatUser.name[0].toUpperCase()}
+          {chatUser?.name[0]?.toUpperCase()}
         </Avatar>
         <div>
           <p className="capitalize mb-0">{chatUser.name}</p>
@@ -362,6 +363,7 @@ export default function ChatScreen() {
                   onRecordingComplete={handleRecordingComplete}
                   recorderControls={recorderControls}
                   showVisualizer={true}
+                  downloadFileExtension="wav"
                 />
                 {recorderControls.isRecording && (
                   <Tooltip title="Discard recording">
